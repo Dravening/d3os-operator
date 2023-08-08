@@ -3,4 +3,14 @@ layout:
 - go.kubebuilder.io/v3
 projectName: d3os-operator
 repo: d3os-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: com.d3os
+  group: d3os-product
+  kind: DataService
+  path: d3os-operator/api/v1
+  version: v1
 version: "3"

@@ -1,0 +1,24 @@
+# permissions for end users to edit dataservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dataservice-editor-role
+rules:
+- apiGroups:
+  - d3os-product.com.d3os
+  resources:
+  - dataservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - d3os-product.com.d3os
+  resources:
+  - dataservices/status
+  verbs:
+  - get

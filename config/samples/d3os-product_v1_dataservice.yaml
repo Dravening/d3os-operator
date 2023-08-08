@@ -1,0 +1,7 @@
+apiVersion: d3os-product.com.d3os/v1
+kind: DataService
+metadata:
+  name: dataservice-sample
+spec:
+  # Add fields here
+  foo: bar
