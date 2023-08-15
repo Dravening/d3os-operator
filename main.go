@@ -79,8 +79,9 @@ func main() {
 	}
 
 	if err = (&controllers.DataServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		DsBackend: &d3osproductv1.DataServiceBackend{},
+		Scheme:    mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DataService")
 		os.Exit(1)
