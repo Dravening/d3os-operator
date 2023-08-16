@@ -28,9 +28,9 @@ spring:
     name: api-proxy-service
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ht
-    password: HT@2023#!ht0704
-    url: jdbc:mysql://10.253.0.28:3306/cosmo_proxy?serverTimezone=Asia/Shanghai
+    url: jdbc:{{mysqlUrl}}/cosmo_proxy?serverTimezone=Asia/Shanghai
+    username: {{mysqlUsername}}
+    password: {{mysqlPassword}}
 
 eureka:
   instance:
@@ -40,7 +40,7 @@ eureka:
     register-with-eureka: true
     registry-fetch-interval-seconds: 180
     service-url:
-      defaultZone: http://eureka.{{ .Release.Namespace }}.svc:8761/eureka
+      defaultZone: {{eurekaUrl}}/eureka
 
 ribbon:
   ReadTimeout: 180000

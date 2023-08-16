@@ -31,9 +31,9 @@ spring:
     enabled: false
     change-log: classpath:/db/change-log/change-log-master.yml
   datasource:
-    url: jdbc:mysql://10.253.0.28:3306/cosmo_gateway?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
-    username: ht
-    password: HT@2023#!ht0704
+    url: jdbc:{{mysqlUrl}}/cosmo_gateway?characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    username: {{mysqlUsername}}
+    password: {{mysqlPassword}}
     driver-class-name: com.mysql.cj.jdbc.Driver
   application:
     name: gateway-master
@@ -54,7 +54,7 @@ eureka:
     register-with-eureka: true
     registry-fetch-interval-seconds: 30
     service-url:
-      defaultZone: http://eureka.{{ .Release.Namespace }}.svc:8761/eureka
+      defaultZone: {{eurekaUrl}}/eureka
 
 statistics:
   enable: true

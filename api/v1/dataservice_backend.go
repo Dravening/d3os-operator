@@ -226,6 +226,26 @@ func (mid *Middleware) TransMidToBackend(req ctrl.Request) *MiddlewareBackend {
 	limitMem := dataservice.ResourceMap[mid.Name].LimitMem
 	limitCpu := dataservice.ResourceMap[mid.Name].LimitCpu
 
+	volumeMountList := []corev1.VolumeMount{}
+	volumeList := []corev1.Volume{}
+	for _, cmData := range dataservice.CMDataMap[mid.Name] {
+		volumeMountList = append(volumeMountList, corev1.VolumeMount{
+			Name:      cmData.VolumeMountName,
+			MountPath: cmData.MountPath,
+			SubPath:   cmData.SubPath,
+		})
+		volumeList = append(volumeList, corev1.Volume{
+			Name: cmData.VolumeMountName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: cmData.Name,
+					},
+				},
+			},
+		})
+	}
+
 	switch mid.Name {
 	case dataservice.Mysql:
 		statefulSet := &appsv1.StatefulSet{
@@ -251,6 +271,7 @@ func (mid *Middleware) TransMidToBackend(req ctrl.Request) *MiddlewareBackend {
 						},
 					},
 					Spec: corev1.PodSpec{
+						Volumes: volumeList,
 						Containers: []corev1.Container{
 							{
 								Name:            mid.Name.String(),
@@ -270,6 +291,7 @@ func (mid *Middleware) TransMidToBackend(req ctrl.Request) *MiddlewareBackend {
 									{Name: "collation-server", Value: "utf8mb4_general_ci"},
 									{Name: "MYSQL_DATABASE", Value: "sdh_auth"},
 								},
+								VolumeMounts: volumeMountList,
 								Resources: corev1.ResourceRequirements{
 									Requests: corev1.ResourceList{
 										"cpu":    resource.MustParse(reqCpu),
@@ -329,13 +351,21 @@ func CMReplace(req ctrl.Request, cmMap map[string]*corev1.ConfigMap, uuc, mysql 
 			// mysqlUrl
 			if mysql.Kind != ThirdParty {
 				replaced = strings.Replace(replaced, dataservice.MysqlUrlTrans, dataservice.MysqlInternalUrl, -1)
+				replaced = strings.Replace(replaced, dataservice.MysqlPasswordTrans, dataservice.MysqlInternalPassword, -1)
+				replaced = strings.Replace(replaced, dataservice.MysqlUsernameTrans, dataservice.MysqlInternalUsername, -1)
 			} else {
 				replaced = strings.Replace(replaced, dataservice.MysqlUrlTrans, mysql.ThirdParty.Url, -1)
+				replaced = strings.Replace(replaced, dataservice.MysqlPasswordTrans, mysql.ThirdParty.Password, -1)
+				replaced = strings.Replace(replaced, dataservice.MysqlUsernameTrans, mysql.ThirdParty.Username, -1)
 			}
+
 			// uucUrl
 			if uuc.Kind != ThirdParty {
 				// 目前uuc都是thirdParty
 			} else {
+				if uuc.ThirdParty.Url == "" {
+					uuc.ThirdParty.Url = dataservice.UucInternalUrl
+				}
 				replaced = strings.Replace(replaced, dataservice.UucUrlTrans, uuc.ThirdParty.Url, -1)
 			}
 			// eurekaUrl

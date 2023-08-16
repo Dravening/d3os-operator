@@ -29,7 +29,7 @@ window.HAIER_APP_CONFIG = {
   // 单点登录: 是否开启UUC单点登录 跳转方式 与【UUC_IS_OPEN_PUBLIC_COOKIE】配置互斥
   UUC_IS_OPEN: true,
   // 单点登录: UUC统一登录地址
-  UUC_URL: 'https://uuc.ymmii.com/duc/login/',
+  UUC_URL: '{{uucUrl}}/login/',
   // UI: favicon.ico图标  如果为空字符显示原系统图标；eg：'/client_config/tianneng/favicon.ico'
   UI_FAVICON: '',
   // UI: logo图片地址 如果为空字符显示原系统图标；eg：'/client_config/tianneng/logo.png'
@@ -70,11 +70,11 @@ server {
 
   # 代理
   location /project-dataservice/base-api1/ {
-    proxy_pass http://proxy.$NAMESPACE.svc:9094/;
+    proxy_pass http://proxy.{{namespace}}.svc:9094/;
   }
   # 代理
   location /project-dataservice/base-api2/ {
-    proxy_pass http://gateway-master.$NAMESPACE.svc:9184/;
+    proxy_pass http://gateway-master.{{namespace}}.svc:9184/;
   }
 
   error_page   500 502 503 504  /50x.html;

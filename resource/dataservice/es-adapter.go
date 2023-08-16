@@ -36,9 +36,9 @@ spring:
   application:
     name: API-ESADAPTER-SERVICE
   datasource:
-    url: jdbc:mysql://10.253.0.28:3306/cosmo_api_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: ht
-    password: HT@2023#!ht0704
+    url: jdbc:{{mysqlUrl}}/cosmo_api_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: {{mysqlUsername}}
+    password: {{mysqlPassword}}
     driver-class-name: com.mysql.cj.jdbc.Driver
   cloud:
     loadbalancer:
@@ -89,7 +89,7 @@ eureka:
       enabled: true
     registry-fetch-interval-seconds: 5
     serviceUrl:
-      defaultZone: http://eureka.{{ .Release.Namespace }}.svc:8761/eureka
+      defaultZone: {{eurekaUrl}}/eureka
   enabled: true
 
 feign:

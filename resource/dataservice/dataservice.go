@@ -23,14 +23,19 @@ const (
 	MysqlUsernameTrans string = "{{mysqlUsername}}"
 	MysqlPasswordTrans string = "{{mysqlPassword}}"
 	EurekaUrlTrans     string = "{{eurekaUrl}}"
-	UucUrlTrans        string = "{{uucUrl}}"
+	UucUrlTrans        string = "{{uucUrl}}" // https://id.cosmoplat.com/duc
 	NamespaceTrans     string = "{{namespace}}"
 )
 
 var (
-	MysqlInternalUrl = fmt.Sprintf("mysql://%s.%s.svc:3306", Mysql, NamespaceTrans)
-	// UucInternalUrl   string = "https://uuc.ymmii.com/duc"
+	MysqlInternalUrl  = fmt.Sprintf("mysql://%s.%s.svc:3306", Mysql, NamespaceTrans)
 	EurekaInternalUrl = fmt.Sprintf("http://%s.%s.svc:8761", Eureka, NamespaceTrans)
+)
+
+const (
+	MysqlInternalUsername = "root"
+	MysqlInternalPassword = "d3os@cosmoplat"
+	UucInternalUrl        = "https://id.cosmoplat.com/duc"
 )
 
 type DSName string

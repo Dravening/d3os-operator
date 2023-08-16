@@ -1,6 +1,9 @@
 package dataservice
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 var mysqlResource = ReqLimit{
 	ReqMem:   "1000Mi",
@@ -51,10 +54,20 @@ default-character-set=utf8mb4
 
 var mysqlCM2 = CMData{
 	Name:            fmt.Sprintf("%s-init", Mysql.String()),
-	VolumeMountName: "mysql-ds-cnf",
-	MountPath:       "/etc/mysql/conf.d",
+	VolumeMountName: "mysql-init",
+	MountPath:       "/docker-entrypoint-initdb.d",
 	SubPath:         "",
 	Data: map[string]string{
-		"my.cnf": ``,
+		"cosmo_api_manager.sql": ``,
 	},
+}
+
+func init() {
+	// 读取文件中前5个字符
+	data, err := os.ReadFile("./file/cosmo_api_manager.sql")
+	if err != nil {
+		fmt.Println("读取mysql-dataservice-cm出错:", err)
+		return
+	}
+	mysqlCM2.Data["cosmo_api_manager.sql"] = string(data)
 }
