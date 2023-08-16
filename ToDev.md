@@ -106,30 +106,200 @@ git push
 
 ### 研发工作
 
-##### 1.需求分析
+#### 1.需求分析
 
 我们的目标是，自动创建并维护一个XX项目，比如dataservice；
 
 我们需要提供给dataservice operator以下内容：
 
-1. mysql是否启用默认部署，如果不使用默认部署，请提供Url、验证方法、用户名、密码
+中间件信息：
 
-- api-manager信息：image、port
-- auth信息：image、port
-- ds-adapter信息：image、port
-- es-adapter信息：image、port
-- gateway-master信息：image、port
-- gateway-web信息：image、port
-- proxy信息：image、port
-- trd-adapter信息：image、port
+1. mysql是否启用默认部署，如果不使用默认部署，需要提供Url、验证方法、用户名、密码
 
-还要提供中间件信息：
+2. uuc是否启用默认部署，如果不使用默认部署，需要提供Url、验证方法
 
-- eureka信息：image、port
-- mysql信息：image、port
+
+服务信息：
+
+- api-manager信息：image、port、replica、nodeport（如需要）、env（如需要）
+- auth信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- ds-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- es-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- eureka信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- gateway-master信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- gateway-web信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- proxy信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- trd-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
 
 还要提供前台信息：
 
 - dataservice-web：image、port、Nodeport
 
-在operator获得这些信息内容之后，它应当自动为我创建
+在operator获得这些信息内容之后，它应当自动为我创建一个dataservice服务。
+
+#### 2.结构体设计
+
+此operator需要根据dataservice crd来创建dataservice服务（包含多个deployment及其相关的service和configmap），则此operator需要维护一个后台数据结构dsBackend，包含相关的所有k8s内置资源。
+
+而dataservice crd与此dsBackend数据结构，存在映射关系。这样就可以实现创建crd后就创建对应服务的功能。
+
+下方是dataservice crd的数据结构
+
+```
+// DataServiceSpec defines the desired state of DataService
+type DataServiceSpec struct {
+	// 中间件 可选连接
+	Mysql *Middleware `json:"mysql"`
+	Uuc   *Middleware `json:"uuc"`
+	// 服务
+	ApiManager    *Service `json:"api-manager"`
+	Auth          *Service `json:"auth"`
+	DsAdapter     *Service `json:"ds-adapter"`
+	Eureka        *Service `json:"eureka"`
+	EsAdapter     *Service `json:"es-adapter"`
+	TrdAdapter    *Service `json:"trd-adapter"`
+	GatewayMaster *Service `json:"gateway-master"`
+	GatewayWeb    *Service `json:"gateway-web"`
+	Proxy         *Service `json:"proxy"`
+	// 前台, 一般是nginx
+	Web *Service `json:"web"`
+}
+
+type Middleware struct {
+	Name       dataservice.DSName    `json:"name"`
+	Kind       MiddlewareKind        `json:"kind"`
+	ThirdParty *MiddlewareThirdParty `json:"thirdParty,omitempty"`
+}
+
+type Service struct {
+	Name     dataservice.DSName `json:"name"`
+	Port     int32              `json:"port"` // todo: 这应该是数组类型
+	NodePort int32              `json:"nodePort,omitempty"`
+	Image    string             `json:"image"`
+	Replica  int32              `json:"replica"`
+
+	Env map[string]string `json:"env,omitempty"`
+}
+```
+
+下方是DataServiceBackend的数据结构
+
+```
+// DataServiceBackend 这是核心的结构对象,维护了各个服务的资源
+type DataServiceBackend struct {
+	// 中间件 可选连接
+	Mysql *MiddlewareBackend `json:"mysql"`
+	Uuc   *MiddlewareBackend `json:"uuc"`
+	// 服务
+	ApiManager    *ServiceBackend `json:"api-manager"`
+	Auth          *ServiceBackend `json:"auth"`
+	DsAdapter     *ServiceBackend `json:"ds-adapter"`
+	EsAdapter     *ServiceBackend `json:"es-adapter"`
+	Eureka        *ServiceBackend `json:"eureka"`
+	TrdAdapter    *ServiceBackend `json:"trd-adapter"`
+	GatewayMaster *ServiceBackend `json:"gateway-master"`
+	GatewayWeb    *ServiceBackend `json:"gateway-web"`
+	Proxy         *ServiceBackend `json:"proxy"`
+	// 前台, 一般是nginx
+	Web *ServiceBackend `json:"web"`
+}
+
+type ServiceBackend struct {
+	Deployment *appsv1.Deployment           `json:"deployment"`
+	Service    *corev1.Service              `json:"service"`
+	ConfigMap  map[string]*corev1.ConfigMap `json:"configMap,omitempty"` // key是cm-name，如"api-manager-py"
+}
+
+type MiddlewareBackend struct {
+	Kind        MiddlewareKind      `json:"kind"`
+	Deployment  *appsv1.Deployment  `json:"deployment,omitempty"`
+	StatefulSet *appsv1.StatefulSet `json:"statefulSet,omitempty"`
+	DaemonSet   *appsv1.DaemonSet   `json:"daemonSet,omitempty"`
+	ConfigMap   *corev1.ConfigMap   `json:"configMap,omitempty"`
+	Service     *corev1.Service     `json:"service"`
+	// 如果中间件采用真机部署，请使用thirdParty
+	ThirdParty *MiddlewareThirdParty `json:"thirdParty,omitempty"`
+}
+```
+
+#### 3.书写逻辑
+
+调谐逻辑如下
+
+```
+func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	rLog := log.FromContext(ctx)
+	rLog.Info("start reconcile logic")
+
+	// 实例化数据结构
+	dsInstance := &d3osproductv1.DataService{}
+
+	// 通过客户端工具查询，查询条件是否有dsInstance存在
+	err := r.Get(ctx, req.NamespacedName, dsInstance)
+	if err != nil {
+		// 如果没有实例，就返回空结果，这样外部就不再立即调用Reconcile方法了
+		if errors.IsNotFound(err) {
+			rLog.Info("dataservice instance %s.%s not found, maybe removed", req.Name, req.Namespace)
+			return reconcile.Result{}, nil
+		}
+		rLog.Error(err, "error getting dataservice instance %s.%s", req.Name, req.Namespace)
+		// 返回错误信息给外部
+		return ctrl.Result{}, err
+	}
+
+	// 调谐开始，首先要生成新的dataServiceBackend
+	// oldDSBackend := r.DsBackend
+	r.DsBackend = dsInstance.Spec.NewDSBackend(req)
+	// todo: 比较新DsBackend与oldDSBackend
+
+	// 1.查找中间件实例是否存在	Mysql Uuc
+	if CheckExistsOrCreateMidBackend(ctx, r, req, r.DsBackend.Mysql) != nil {
+		return ctrl.Result{}, err
+	}
+	if CheckExistsOrCreateMidBackend(ctx, r, req, r.DsBackend.Uuc) != nil {
+		return ctrl.Result{}, err
+	}
+
+	// 2.调谐服务 ApiManager Auth DsAdapter EsAdapter Eureka TrdAdapter GatewayMaster GatewayWeb Proxy
+	// ApiManager
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.ApiManager) != nil {
+		return ctrl.Result{}, err
+	}
+	// Auth
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Auth) != nil {
+		return ctrl.Result{}, err
+	}
+	// DsAdapter
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.DsAdapter) != nil {
+		return ctrl.Result{}, err
+	}
+	// EsAdapter
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.EsAdapter) != nil {
+		return ctrl.Result{}, err
+	}
+	// TrdAdapter
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.TrdAdapter) != nil {
+		return ctrl.Result{}, err
+	}
+	// GatewayMaster
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.GatewayMaster) != nil {
+		return ctrl.Result{}, err
+	}
+	// GatewayWeb
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.GatewayWeb) != nil {
+		return ctrl.Result{}, err
+	}
+	// Proxy
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Proxy) != nil {
+		return ctrl.Result{}, err
+	}
+
+	// 3.查找并部署web服务
+	if CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Web) != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+```
+

@@ -3,5 +3,75 @@ kind: DataService
 metadata:
   name: dataservice-sample
 spec:
-  # Add fields here
-  foo: bar
+  mysql:
+    name: mysql
+    kind: 2
+    thirdParty:
+  uuc:
+    name: uuc
+    kind: 4
+    thirdParty:
+      checkCMD: 'curl --output /dev/null --silent --head --fail https://id.cosmoplat.com/duc'
+      url: https://id.cosmoplat.com/duc
+  api-manager:
+    image: registry-edge.cosmoplat.com/dataservice/api-manager:v1.4
+    name: api-manager
+    nodePort:
+    port: 9085
+    replica: 1
+    env:
+      writer: "draven"
+  auth:
+    image: registry-edge.cosmoplat.com/dataservice/auth:v1.4
+    name: auth
+    nodePort:
+    port: 9081
+    replica: 1
+  ds-adapter:
+    image: registry-edge.cosmoplat.com/dataservice/ds-adapter:v1.4
+    name: ds-adapter
+    nodePort:
+    port: 9086
+    replica: 1
+  es-adapter:
+    image: registry-edge.cosmoplat.com/dataservice/es-adapter:v1.4
+    name: es-adapter
+    nodePort:
+    port: 9087
+    replica: 1
+  eureka:
+    image: registry-edge.cosmoplat.com/dataservice/eureka:v1
+    name: eureka
+    nodePort:
+    port: 8761
+    replica: 1
+  gateway-master:
+    image: registry-edge.cosmoplat.com/dataservice/gateway-master:v1.4
+    name: gateway-master
+    nodePort:
+    port: 9184
+    replica: 1
+  gateway-web:
+    image: registry-edge.cosmoplat.com/dataservice/gateway-web:v1.4
+    name: gateway-web
+    nodePort:
+    port: 9084
+    replica: 1
+  proxy:
+    image: registry-edge.cosmoplat.com/dataservice/proxy:v1.4
+    name: proxy
+    nodePort:
+    port: 9094
+    replica: 1
+  trd-adapter:
+    image: registry-edge.cosmoplat.com/dataservice/trd-adapter:v1.4
+    name: trd-adapter
+    nodePort:
+    port: 9088
+    replica: 1
+  web:
+    image: registry-edge.cosmoplat.com/dataservice/dataservice-web:v1.4
+    name: web
+    nodePort: 30180
+    port: 80
+    replica: 1
