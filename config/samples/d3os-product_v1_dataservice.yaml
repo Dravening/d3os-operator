@@ -4,7 +4,7 @@ metadata:
   name: dataservice-sample
 spec:
   mysql:
-    name: mysql
+    name: mysql-dataservice
     kind: 1
     thirdParty:
   uuc:
