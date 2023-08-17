@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,14 +72,16 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	rLog.V(2).Info("got dsInstance, go on")
+	rLog.V(1).Info("got dsInstance, go on")
 
 	// 调谐开始，首先要生成新的dataServiceBackend
 	// oldDSBackend := r.DsBackend
 	r.DsBackend = dsInstance.Spec.NewDSBackend(req)
 	// todo: 比较新DsBackend与oldDSBackend
 
-	rLog.V(2).Info("got a new DSBackend, go on")
+	rLog.V(1).Info("got a new DSBackend, go on")
+
+	fmt.Println(*r.DsBackend)
 
 	// 1.查找中间件实例是否存在	Mysql Uuc
 	if err = CheckExistsOrCreateMidBackend(ctx, r, req, r.DsBackend.Mysql); err != nil {

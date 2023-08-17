@@ -23,7 +23,7 @@ func cmdCall(command string) error {
 
 func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, deploy *appsv1.Deployment) error {
 	if deploy == nil {
-		return fmt.Errorf("spec info doesn't exist, please check crd config")
+		return fmt.Errorf("spec Deployment info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	deployTemp := &appsv1.Deployment{}
@@ -47,7 +47,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 
 func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, statefulSet *appsv1.StatefulSet) error {
 	if statefulSet == nil {
-		return fmt.Errorf("spec info doesn't exist, please check crd config")
+		return fmt.Errorf("spec StatefulSet info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	stateTemp := &appsv1.StatefulSet{}
@@ -71,7 +71,7 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 
 func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, daemonSet *appsv1.DaemonSet) error {
 	if daemonSet == nil {
-		return fmt.Errorf("spec info doesn't exist, please check crd config")
+		return fmt.Errorf("spec DaemonSet info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	daemonTemp := &appsv1.DaemonSet{}
@@ -95,7 +95,7 @@ func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, r
 
 func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, service *corev1.Service) error {
 	if service == nil {
-		return fmt.Errorf("spec info doesn't exist, please check crd config")
+		return fmt.Errorf("spec Service info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	serviceTemp := &corev1.Service{}
@@ -119,7 +119,7 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, req
 
 func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, configMap *corev1.ConfigMap) error {
 	if configMap == nil {
-		return fmt.Errorf("spec info doesn't exist, please check crd config")
+		return fmt.Errorf("spec ConfigMap info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	configMapTemp := &corev1.ConfigMap{}
