@@ -24,7 +24,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 FROM busybox:1.31.1
 WORKDIR /
 COPY --from=builder /workspace/manager .
-COPY --from=builder /workspace/resource/dataservice/file .
+COPY --from=builder /workspace/resource/dataservice .
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]

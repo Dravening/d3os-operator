@@ -303,3 +303,38 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 ```
 
+### 部署调试
+
+```
+// 将crd部署到kubernetes
+[root@k8s-master d3os-operator]# make install
+/root/draven/go_work/src/d3os-operator/bin/controller-gen "crd:trivialVersions=true,preserveUnknownFields=false" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/root/draven/go_work/src/d3os-operator/bin/kustomize build config/crd | kubectl apply -f -
+customresourcedefinition.apiextensions.k8s.io/dataservices.d3os-product.com.d3os created
+```
+
+```
+// 查询一下
+[root@k8s-master d3os-operator]# kubectl api-versions | grep d3os
+d3os-product.com.d3os/v1
+```
+
+```
+// 删除crd
+[root@k8s-master d3os-operator]# make uninstall
+/root/draven/go_work/src/d3os-operator/bin/controller-gen "crd:trivialVersions=true,preserveUnknownFields=false" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/root/draven/go_work/src/d3os-operator/bin/kustomize build config/crd | kubectl delete -f -
+customresourcedefinition.apiextensions.k8s.io "dataservices.d3os-product.com.d3os" deleted
+```
+
+打包并推送镜像
+
+```
+make docker-build docker-push
+```
+
+部署
+```
+make deploy
+```
+
