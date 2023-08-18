@@ -79,49 +79,49 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// todo: 比较新DsBackend与oldDSBackend
 
 	// 1.查找中间件实例是否存在	Mysql Uuc
-	if err = CheckExistsOrCreateMidBackend(ctx, r, req, r.DsBackend.Mysql); err != nil {
+	if err = CheckExistsOrCreateMidBackend(ctx, r, r.DsBackend.Mysql); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = CheckExistsOrCreateMidBackend(ctx, r, req, r.DsBackend.Uuc); err != nil {
+	if err = CheckExistsOrCreateMidBackend(ctx, r, r.DsBackend.Uuc); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// 2.调谐服务 ApiManager Auth DsAdapter EsAdapter Eureka TrdAdapter GatewayMaster GatewayWeb Proxy
 	// ApiManager
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.ApiManager); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.ApiManager); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Auth
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Auth); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.Auth); err != nil {
 		return ctrl.Result{}, err
 	}
 	// DsAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.DsAdapter); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.DsAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// EsAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.EsAdapter); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.EsAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// TrdAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.TrdAdapter); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.TrdAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// GatewayMaster
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.GatewayMaster); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.GatewayMaster); err != nil {
 		return ctrl.Result{}, err
 	}
 	// GatewayWeb
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.GatewayWeb); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.GatewayWeb); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Proxy
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Proxy); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.Proxy); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// 3.查找并部署web服务
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, req, r.DsBackend.Web); err != nil {
+	if err = CheckExistsOrCreateSvcBackend(ctx, r, r.DsBackend.Web); err != nil {
 		return ctrl.Result{}, err
 	}
 

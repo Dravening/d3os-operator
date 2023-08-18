@@ -8,7 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -21,121 +21,141 @@ func cmdCall(command string) error {
 	return nil
 }
 
-func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, deploy *appsv1.Deployment) error {
+func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, deploy *appsv1.Deployment) error {
 	if deploy == nil {
 		return fmt.Errorf("spec Deployment info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	deployTemp := &appsv1.Deployment{}
-	err := r.Get(ctx, req.NamespacedName, deployTemp)
+	objKey := types.NamespacedName{
+		Name:      deploy.Name,
+		Namespace: deploy.Namespace,
+	}
+	err := r.Get(ctx, objKey, deployTemp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			rLog.Info("deployment %s not found", req.String())
+			rLog.Info(fmt.Sprintf("deployment %s not found", objKey.String()))
 			return nil
 		}
-		rLog.Error(err, "getting deployment %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("getting deployment %s error", objKey.String()))
 		return err
 	}
 	// 创建deployment
-	rLog.Info("creating deployment %s", req.String())
+	rLog.Info(fmt.Sprintf("creating deployment %s error", objKey.String()))
 	if err = r.Create(ctx, deploy); err != nil {
-		rLog.Error(err, "creating deployment %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("creating deployment %s", objKey.String()))
 		return err
 	}
 	return nil
 }
 
-func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, statefulSet *appsv1.StatefulSet) error {
+func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, statefulSet *appsv1.StatefulSet) error {
 	if statefulSet == nil {
 		return fmt.Errorf("spec StatefulSet info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	stateTemp := &appsv1.StatefulSet{}
-	err := r.Get(ctx, req.NamespacedName, stateTemp)
+	objKey := types.NamespacedName{
+		Name:      statefulSet.Name,
+		Namespace: statefulSet.Namespace,
+	}
+	err := r.Get(ctx, objKey, stateTemp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			rLog.Info("statefulSet %s not found", req.String())
+			rLog.Info(fmt.Sprintf("statefulSet %s not found", objKey.String()))
 			return nil
 		}
-		rLog.Error(err, "getting statefulSet %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("getting statefulSet %s error", objKey.String()))
 		return err
 	}
 	// 创建statefulSet
-	rLog.Info("creating statefulSet %s", req.String())
+	rLog.Info(fmt.Sprintf("creating statefulSet %s error", objKey.String()))
 	if err = r.Create(ctx, statefulSet); err != nil {
-		rLog.Error(err, "creating statefulSet %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("creating statefulSet %s", objKey.String()))
 		return err
 	}
 	return nil
 }
 
-func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, daemonSet *appsv1.DaemonSet) error {
+func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, daemonSet *appsv1.DaemonSet) error {
 	if daemonSet == nil {
 		return fmt.Errorf("spec DaemonSet info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	daemonTemp := &appsv1.DaemonSet{}
-	err := r.Get(ctx, req.NamespacedName, daemonTemp)
+	objKey := types.NamespacedName{
+		Name:      daemonSet.Name,
+		Namespace: daemonSet.Namespace,
+	}
+	err := r.Get(ctx, objKey, daemonTemp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			rLog.Info("daemonSet %s not found", req.String())
+			rLog.Info(fmt.Sprintf("daemonSet %s not found", objKey.String()))
 			return nil
 		}
-		rLog.Error(err, "getting daemonSet %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("getting daemonSet %s error", objKey.String()))
 		return err
 	}
 	// 创建daemonSet
-	rLog.Info("creating daemonSet %s", req.String())
+	rLog.Info(fmt.Sprintf("creating daemonSet %s error", objKey.String()))
 	if err = r.Create(ctx, daemonSet); err != nil {
-		rLog.Error(err, "creating daemonSet %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("creating daemonSet %s", objKey.String()))
 		return err
 	}
 	return nil
 }
 
-func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, service *corev1.Service) error {
+func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, service *corev1.Service) error {
 	if service == nil {
 		return fmt.Errorf("spec Service info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	serviceTemp := &corev1.Service{}
-	err := r.Get(ctx, req.NamespacedName, serviceTemp)
+	objKey := types.NamespacedName{
+		Name:      service.Name,
+		Namespace: service.Namespace,
+	}
+	err := r.Get(ctx, objKey, serviceTemp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			rLog.Info("service %s not found", req.String())
+			rLog.Info(fmt.Sprintf("service %s not found", objKey.String()))
 			return nil
 		}
-		rLog.Error(err, "getting service %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("getting service %s error", objKey.String()))
 		return err
 	}
 	// 创建service
-	rLog.Info("creating service %s", req.String())
+	rLog.Info(fmt.Sprintf("creating service %s error", objKey.String()))
 	if err = r.Create(ctx, service); err != nil {
-		rLog.Error(err, "creating service %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("creating service %s", objKey.String()))
 		return err
 	}
 	return nil
 }
 
-func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, req ctrl.Request, configMap *corev1.ConfigMap) error {
+func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, configMap *corev1.ConfigMap) error {
 	if configMap == nil {
 		return fmt.Errorf("spec ConfigMap info doesn't exist, please check crd config")
 	}
 	rLog := log.FromContext(ctx)
 	configMapTemp := &corev1.ConfigMap{}
-	err := r.Get(ctx, req.NamespacedName, configMapTemp)
+	objKey := types.NamespacedName{
+		Name:      configMap.Name,
+		Namespace: configMap.Namespace,
+	}
+	err := r.Get(ctx, objKey, configMapTemp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			rLog.Info("configMap %s not found", req.String())
+			rLog.Info(fmt.Sprintf("configMap %s not found", objKey.String()))
 			return nil
 		}
-		rLog.Error(err, "getting configMap %s error: %s", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("getting configMap %s error", objKey.String()))
 		return err
 	}
 	// 创建configMap
-	rLog.Info("creating configMap %s", req.String())
+	rLog.Info(fmt.Sprintf("creating configMap %s error", objKey.String()))
 	if err = r.Create(ctx, configMap); err != nil {
-		rLog.Error(err, "creating configMap %s error: ", req.String(), err)
+		rLog.Error(err, fmt.Sprintf("creating configMap %s", objKey.String()))
 		return err
 	}
 	return nil
