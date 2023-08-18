@@ -38,7 +38,7 @@ type DataServiceReconciler struct {
 //+kubebuilder:rbac:groups=d3os-product.com.d3os,resources=dataservices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=d3os-product.com.d3os,resources=dataservices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=d3os-product.com.d3os,resources=dataservices/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=deployments;statefulSets;daemonSets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments;statefulsets;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
