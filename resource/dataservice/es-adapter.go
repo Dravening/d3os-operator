@@ -12,7 +12,10 @@ var esAdapterCMList = CMDataList{
 }
 
 var esAdapterCM = CMData{
-	Name: EsAdapter.String(),
+	Name:            EsAdapter.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/adapter/es-adapter/config/application.yml",
+	SubPath:         "application.yml",
 	Data: map[string]string{
 		"application.yml": `
 server:

@@ -12,7 +12,10 @@ var gatewayWebCMList = CMDataList{
 }
 
 var gatewayWebCM = CMData{
-	Name: GatewayWeb.String(),
+	Name:            GatewayWeb.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/gateway/web/config/application.yml",
+	SubPath:         "application.yml",
 	Data: map[string]string{
 		"application.yml": `
 server:

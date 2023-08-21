@@ -12,7 +12,10 @@ var dsAdapterCMList = CMDataList{
 }
 
 var dsAdapterCM = CMData{
-	Name: DsAdapter.String(),
+	Name:            DsAdapter.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/adapter/ds-adapter/config/application.yml",
+	SubPath:         "application.yml",
 	Data: map[string]string{
 		"application.yml": `
 server:

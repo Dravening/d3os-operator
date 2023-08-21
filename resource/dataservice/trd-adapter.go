@@ -1,7 +1,5 @@
 package dataservice
 
-import "fmt"
-
 var trdAdapterResource = ReqLimit{
 	ReqMem:   "1000Mi",
 	ReqCpu:   "10m",
@@ -15,7 +13,10 @@ var trdAdapterCMList = CMDataList{
 }
 
 var trdAdapterCM1 = CMData{
-	Name: Proxy.String(),
+	Name:            TrdAdapter.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/adapter/3rd-adapter/config/application.yml",
+	SubPath:         "application.yml",
 	Data: map[string]string{
 		"application.yml": `
 server:
@@ -78,7 +79,10 @@ management:
 }
 
 var trdAdapterCM2 = CMData{
-	Name: fmt.Sprintf("%s-py", Proxy.String()),
+	Name:            TrdAdapter.String(),
+	VolumeMountName: "configs-py",
+	MountPath:       "/dataservice/adapter/3rd-adapter/config/pythonScript.py",
+	SubPath:         "pythonScript.py",
 	Data: map[string]string{
 		"pythonScript.py": `
 #!/usr/bin/python

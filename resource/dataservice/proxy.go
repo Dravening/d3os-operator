@@ -12,7 +12,10 @@ var proxyCMList = CMDataList{
 }
 
 var proxyCM = CMData{
-	Name: Proxy.String(),
+	Name:            Proxy.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/proxy/config/application.yml",
+	SubPath:         "application.yml",
 	Data: map[string]string{
 		"application.yml": `
 server:

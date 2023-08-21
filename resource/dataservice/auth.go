@@ -12,7 +12,10 @@ var authCMList = CMDataList{
 }
 
 var authCM = CMData{
-	Name: Auth.String(),
+	Name:            Auth.String(),
+	VolumeMountName: "configs",
+	MountPath:       "/dataservice/auth/config/application.properties",
+	SubPath:         "application.properties",
 	Data: map[string]string{
 		"application.yml": `
 server.port=9081
