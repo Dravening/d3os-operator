@@ -9,9 +9,9 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - daemonSets
+  - daemonsets
   - deployments
-  - statefulSets
+  - statefulsets
   verbs:
   - create
   - delete
@@ -23,6 +23,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
   - services
   verbs:
   - create
