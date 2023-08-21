@@ -19,8 +19,8 @@ func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler
 		err = createDaemonSetIfNotExists(ctx, r, middlewareBackend.DaemonSet)
 	case d3osoperatorv1.ThirdParty:
 		// 要查询checkCMD
-		if cmdCall(middlewareBackend.ThirdParty.CheckCMD) != nil {
-			err = fmt.Errorf("unable to connect thirdparty middleware %s, will waiting", middlewareBackend.ThirdParty.Url)
+		if err = cmdCall(middlewareBackend.ThirdParty.CheckCMD); err != nil {
+			return fmt.Errorf("unable to connect thirdparty middleware %s, err: %s", middlewareBackend.ThirdParty.Url, err)
 		}
 	}
 	if err != nil {
