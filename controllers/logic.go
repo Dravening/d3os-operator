@@ -8,15 +8,15 @@ import (
 )
 
 // CheckExistsOrCreateMidBackend 验证或新建MiddlewareBackend
-func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler, middlewareBackend *d3osoperatorv1.MiddlewareBackend) error {
+func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler, middlewareBackend *d3osoperatorv1.MiddlewareBackend, dsInstance *d3osoperatorv1.DataService) error {
 	var err error
 	switch middlewareBackend.Kind {
 	case d3osoperatorv1.Deployment:
-		err = createDeploymentIfNotExists(ctx, r, middlewareBackend.Deployment)
+		err = createDeploymentIfNotExists(ctx, r, middlewareBackend.Deployment, dsInstance)
 	case d3osoperatorv1.StatefulSet:
-		err = createStatefulSetIfNotExists(ctx, r, middlewareBackend.StatefulSet)
+		err = createStatefulSetIfNotExists(ctx, r, middlewareBackend.StatefulSet, dsInstance)
 	case d3osoperatorv1.DaemonSet:
-		err = createDaemonSetIfNotExists(ctx, r, middlewareBackend.DaemonSet)
+		err = createDaemonSetIfNotExists(ctx, r, middlewareBackend.DaemonSet, dsInstance)
 	case d3osoperatorv1.ThirdParty:
 		// 要查询checkCMD
 		if err = cmdCall(middlewareBackend.ThirdParty.CheckCMD); err != nil {
@@ -27,13 +27,13 @@ func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler
 		return err
 	}
 	if middlewareBackend.Service != nil {
-		err = createServiceIfNotExists(ctx, r, middlewareBackend.Service)
+		err = createServiceIfNotExists(ctx, r, middlewareBackend.Service, dsInstance)
 		if err != nil {
 			return err
 		}
 	}
 	if middlewareBackend.ConfigMap != nil {
-		err = createConfigMapIfNotExists(ctx, r, middlewareBackend.ConfigMap)
+		err = createConfigMapIfNotExists(ctx, r, middlewareBackend.ConfigMap, dsInstance)
 		if err != nil {
 			return err
 		}
@@ -42,19 +42,19 @@ func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler
 }
 
 // CheckExistsOrCreateSvcBackend 验证或新建DeployWithSvcCM, deployment和service都是必填项, 如果nil直接报错
-func CheckExistsOrCreateSvcBackend(ctx context.Context, r *DataServiceReconciler, svcBackend *d3osoperatorv1.ServiceBackend) error {
+func CheckExistsOrCreateSvcBackend(ctx context.Context, r *DataServiceReconciler, svcBackend *d3osoperatorv1.ServiceBackend, dsInstance *d3osoperatorv1.DataService) error {
 	var err error
-	err = createDeploymentIfNotExists(ctx, r, svcBackend.Deployment)
+	err = createDeploymentIfNotExists(ctx, r, svcBackend.Deployment, dsInstance)
 	if err != nil {
 		return err
 	}
-	err = createServiceIfNotExists(ctx, r, svcBackend.Service)
+	err = createServiceIfNotExists(ctx, r, svcBackend.Service, dsInstance)
 	if err != nil {
 		return err
 	}
 	if svcBackend.ConfigMap != nil {
 		for _, cm := range svcBackend.ConfigMap {
-			err = createConfigMapIfNotExists(ctx, r, cm)
+			err = createConfigMapIfNotExists(ctx, r, cm, dsInstance)
 			if err != nil {
 				return err
 			}
