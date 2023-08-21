@@ -13,10 +13,10 @@ import (
 )
 
 func cmdCall(command string) error {
-	cmd := exec.Command("/bin/bash", "-c", command)
+	cmd := exec.Command("/bin/sh", "-c", command)
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("/bin/bash执行[%s]命令时出错: %s\n", command, err)
+		return fmt.Errorf("/bin/sh执行[%s]命令时出错: %s\n", command, err)
 	}
 	return nil
 }

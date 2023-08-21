@@ -21,10 +21,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 # FROM gcr.io/distroless/static:nonroot
-FROM busybox:1.31.1
+FROM registry.cn-hangzhou.aliyuncs.com/draven_yyz/alpine:cn-latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/resource/dataservice .
-USER 65532:65532
 
 ENTRYPOINT ["/manager"]
