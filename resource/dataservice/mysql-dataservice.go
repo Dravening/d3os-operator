@@ -6,10 +6,10 @@ import (
 )
 
 var mysqlResource = ReqLimit{
-	ReqMem:   "1000Mi",
-	ReqCpu:   "10m",
-	LimitMem: "1000Mi",
-	LimitCpu: "200m",
+	ReqMem:   "1500Mi",
+	ReqCpu:   "100m",
+	LimitMem: "2000Mi",
+	LimitCpu: "1000m",
 }
 
 var mysqlCMList = CMDataList{
@@ -57,17 +57,32 @@ var mysqlCM2 = CMData{
 	VolumeMountName: "mysql-init",
 	MountPath:       "/docker-entrypoint-initdb.d",
 	SubPath:         "",
-	Data: map[string]string{
-		"cosmo_api_manager.sql": ``,
+	Data:            map[string]string{
+		/*
+			"cosmo_api_manager.sql": ``,
+			"cosmo_datasource.sql":  ``,
+			"cosmo_gateway.sql":     ``,
+			"cosmo_proxy.sql":       ``,
+			"sdh_auth.sql":          ``,
+			"sdh_auth_data.sql":     ``,
+		*/
 	},
 }
 
 func init() {
-	// 读取文件中前5个字符
-	data, err := os.ReadFile("./file/cosmo_api_manager.sql")
+	// 读取有多少个文件
+	files, err := os.ReadDir("./file")
 	if err != nil {
-		fmt.Println("读取mysql-dataservice-cm出错:", err)
+		fmt.Println("Error reading directory ./file, err:", err)
 		return
 	}
-	mysqlCM2.Data["cosmo_api_manager.sql"] = string(data)
+	for _, i := range files {
+		filename := i.Name()
+		data, err := os.ReadFile(fmt.Sprintf("./file/%s", filename))
+		if err != nil {
+			fmt.Println("读取mysql-dataservice-cm出错:", err)
+			return
+		}
+		mysqlCM2.Data[filename] = string(data)
+	}
 }

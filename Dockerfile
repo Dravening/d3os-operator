@@ -24,6 +24,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 FROM registry.cn-hangzhou.aliyuncs.com/draven_yyz/alpine:cn-latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
-COPY --from=builder /workspace/resource/dataservice .
+COPY --from=builder /workspace/resource/dataservice/file file
 
 ENTRYPOINT ["/manager"]
