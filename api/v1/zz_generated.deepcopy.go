@@ -290,8 +290,18 @@ func (in *MiddlewareBackend) DeepCopyInto(out *MiddlewareBackend) {
 	}
 	if in.ConfigMap != nil {
 		in, out := &in.ConfigMap, &out.ConfigMap
-		*out = new(corev1.ConfigMap)
-		(*in).DeepCopyInto(*out)
+		*out = make(map[string]*corev1.ConfigMap, len(*in))
+		for key, val := range *in {
+			var outVal *corev1.ConfigMap
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				in, out := &val, &outVal
+				*out = new(corev1.ConfigMap)
+				(*in).DeepCopyInto(*out)
+			}
+			(*out)[key] = outVal
+		}
 	}
 	if in.Service != nil {
 		in, out := &in.Service, &out.Service
