@@ -1,5 +1,7 @@
 package dataservice
 
+import "fmt"
+
 var trdAdapterResource = ReqLimit{
 	ReqMem:   "1000Mi",
 	ReqCpu:   "10m",
@@ -79,7 +81,7 @@ management:
 }
 
 var trdAdapterCM2 = CMData{
-	Name:            TrdAdapter.String(),
+	Name:            fmt.Sprintf("%s-py", TrdAdapter.String()),
 	VolumeMountName: "configs-py",
 	MountPath:       "/dataservice/adapter/3rd-adapter/config/pythonScript.py",
 	SubPath:         "pythonScript.py",

@@ -1,5 +1,7 @@
 package dataservice
 
+import "fmt"
+
 var webResource = ReqLimit{
 	ReqMem:   "1000Mi",
 	ReqCpu:   "10m",
@@ -43,7 +45,7 @@ window.HAIER_APP_CONFIG = {
 }
 
 var webCM2 = CMData{
-	Name:            Web.String(),
+	Name:            fmt.Sprintf("%s-template", Web.String()),
 	VolumeMountName: "config-template",
 	MountPath:       "/etc/nginx/templates/default.conf.template",
 	SubPath:         "default.conf.template",

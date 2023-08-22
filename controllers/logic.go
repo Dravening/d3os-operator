@@ -33,9 +33,11 @@ func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler
 		}
 	}
 	if middlewareBackend.ConfigMap != nil {
-		err = createConfigMapIfNotExists(ctx, r, middlewareBackend.ConfigMap, dsInstance)
-		if err != nil {
-			return err
+		for _, cm := range middlewareBackend.ConfigMap {
+			err = createConfigMapIfNotExists(ctx, r, cm, dsInstance)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

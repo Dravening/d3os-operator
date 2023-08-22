@@ -38,12 +38,12 @@ type ServiceBackend struct {
 }
 
 type MiddlewareBackend struct {
-	Kind        MiddlewareKind      `json:"kind"`
-	Deployment  *appsv1.Deployment  `json:"deployment,omitempty"`
-	StatefulSet *appsv1.StatefulSet `json:"statefulSet,omitempty"`
-	DaemonSet   *appsv1.DaemonSet   `json:"daemonSet,omitempty"`
-	ConfigMap   *corev1.ConfigMap   `json:"configMap,omitempty"`
-	Service     *corev1.Service     `json:"service"`
+	Kind        MiddlewareKind               `json:"kind"`
+	Deployment  *appsv1.Deployment           `json:"deployment,omitempty"`
+	StatefulSet *appsv1.StatefulSet          `json:"statefulSet,omitempty"`
+	DaemonSet   *appsv1.DaemonSet            `json:"daemonSet,omitempty"`
+	ConfigMap   map[string]*corev1.ConfigMap `json:"configMap,omitempty"` // key是cm-name，如"mysql-dataservice"
+	Service     *corev1.Service              `json:"service"`
 	// 如果中间件采用真机部署，请使用thirdParty
 	ThirdParty *MiddlewareThirdParty `json:"thirdParty,omitempty"`
 }
@@ -335,6 +335,23 @@ func (mid *Middleware) TransMidToBackend(req ctrl.Request) *MiddlewareBackend {
 			},
 		}
 		midBackend.Service = service
+
+		// configMap
+		cmMap := map[string]*corev1.ConfigMap{}
+		for _, cmData := range dataservice.CMDataMap[dataservice.Mysql] {
+			cmMap[cmData.Name] = &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: req.Namespace,
+					Name:      cmData.Name,
+					Labels: map[string]string{
+						"dataservice": req.Name,
+						"app":         dataservice.Mysql.String(),
+					},
+				},
+				Data: cmData.Data,
+			}
+		}
+		midBackend.ConfigMap = cmMap
 
 	case dataservice.UUC:
 		// 目前都是三方, do nothing
