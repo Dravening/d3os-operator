@@ -85,6 +85,9 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateMidBackend(ctx, r, r.DsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = CheckExistsOrCreateMidBackend(ctx, r, r.DsBackend.Eureka, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// 2.调谐服务 ApiManager Auth DsAdapter EsAdapter Eureka TrdAdapter GatewayMaster GatewayWeb Proxy
 	// ApiManager

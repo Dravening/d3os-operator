@@ -15,14 +15,14 @@ import (
 // DataServiceBackend 这是核心的结构对象,维护了各个服务的资源
 type DataServiceBackend struct {
 	// 中间件 可选连接
-	Mysql *MiddlewareBackend `json:"mysql"`
-	Uuc   *MiddlewareBackend `json:"uuc"`
+	Mysql  *MiddlewareBackend `json:"mysql"`
+	Uuc    *MiddlewareBackend `json:"uuc"`
+	Eureka *MiddlewareBackend `json:"eureka"`
 	// 服务
 	ApiManager    *ServiceBackend `json:"api-manager"`
 	Auth          *ServiceBackend `json:"auth"`
 	DsAdapter     *ServiceBackend `json:"ds-adapter"`
 	EsAdapter     *ServiceBackend `json:"es-adapter"`
-	Eureka        *ServiceBackend `json:"eureka"`
 	TrdAdapter    *ServiceBackend `json:"trd-adapter"`
 	GatewayMaster *ServiceBackend `json:"gateway-master"`
 	GatewayWeb    *ServiceBackend `json:"gateway-web"`
@@ -354,9 +354,98 @@ func (mid *Middleware) TransMidToBackend(req ctrl.Request) *MiddlewareBackend {
 		midBackend.ConfigMap = cmMap
 
 	case dataservice.UUC:
-		// 目前都是三方, do nothing
-	}
+	// 目前都是三方, do nothing
 
+	case dataservice.Eureka:
+		var env []corev1.EnvVar
+		env = append(env, corev1.EnvVar{
+			Name:  "TZ",
+			Value: "Asia/Shanghai",
+		})
+
+		// deployment
+		deployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: req.Namespace,
+				Name:      dataservice.Eureka.String(),
+				Labels: map[string]string{
+					"dataservice": req.Name,
+					"app":         dataservice.Eureka.String(),
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Replicas: pointer.Int32Ptr(1),
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app": dataservice.Eureka.String(),
+					},
+				},
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"app": dataservice.Eureka.String(),
+						},
+					},
+					Spec: corev1.PodSpec{
+						Volumes: volumeList,
+						Containers: []corev1.Container{
+							{
+								Name:            dataservice.Eureka.String(),
+								Image:           "registry-edge.cosmoplat.com/dataservice/eureka:v1",
+								ImagePullPolicy: "IfNotPresent",
+								Ports: []corev1.ContainerPort{
+									{
+										Name:          "http",
+										Protocol:      corev1.ProtocolTCP,
+										ContainerPort: 8761,
+									},
+								},
+								Env:          env,
+								VolumeMounts: volumeMountList,
+								Resources: corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										"cpu":    resource.MustParse(reqCpu),
+										"memory": resource.MustParse(reqMem),
+									},
+									Limits: corev1.ResourceList{
+										"cpu":    resource.MustParse(limitCpu),
+										"memory": resource.MustParse(limitMem),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		midBackend.Deployment = deployment
+
+		// service
+		service := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: req.Namespace,
+				Name:      mid.Name.String(),
+				Labels: map[string]string{
+					"dataservice": req.Name,
+					"app":         mid.Name.String(),
+				},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Name:     "http",
+						Protocol: corev1.ProtocolTCP,
+						Port:     8761,
+					},
+				},
+				Selector: map[string]string{
+					"app": mid.Name.String(),
+				},
+				Type: corev1.ServiceTypeClusterIP,
+			},
+		}
+		midBackend.Service = service
+	}
 	return midBackend
 }
 
@@ -397,12 +486,13 @@ func CMReplace(req ctrl.Request, cmMap map[string]*corev1.ConfigMap, uuc, mysql 
 
 func (dsSpec *DataServiceSpec) NewDSBackend(req ctrl.Request) *DataServiceBackend {
 	dsBackend := &DataServiceBackend{
-		Mysql:         dsSpec.Mysql.TransMidToBackend(req),
-		Uuc:           dsSpec.Uuc.TransMidToBackend(req),
+		Mysql:  dsSpec.Mysql.TransMidToBackend(req),
+		Uuc:    dsSpec.Uuc.TransMidToBackend(req),
+		Eureka: dsSpec.Eureka.TransMidToBackend(req),
+
 		ApiManager:    dsSpec.ApiManager.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
 		Auth:          dsSpec.Auth.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
 		DsAdapter:     dsSpec.DsAdapter.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
-		Eureka:        dsSpec.Eureka.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
 		EsAdapter:     dsSpec.EsAdapter.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
 		TrdAdapter:    dsSpec.TrdAdapter.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),
 		GatewayMaster: dsSpec.GatewayMaster.TransSvcToBackend(req, dsSpec.Uuc, dsSpec.Mysql),

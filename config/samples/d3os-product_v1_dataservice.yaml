@@ -13,6 +13,10 @@ spec:
     thirdParty:
       checkCMD: 'curl --output /dev/null --silent --head --fail https://id.cosmoplat.com/duc'
       url: https://id.cosmoplat.com/duc
+  eureka:
+    name: eureka
+    kind: 0
+    thirdParty:
   api-manager:
     image: registry-edge.cosmoplat.com/dataservice/api-manager:v1.4
     name: api-manager
@@ -38,12 +42,6 @@ spec:
     name: es-adapter
     nodePort:
     port: 9087
-    replica: 1
-  eureka:
-    image: registry-edge.cosmoplat.com/dataservice/eureka:v1
-    name: eureka
-    nodePort:
-    port: 8761
     replica: 1
   gateway-master:
     image: registry-edge.cosmoplat.com/dataservice/gateway-master:v1.4

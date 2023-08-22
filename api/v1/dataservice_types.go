@@ -71,13 +71,14 @@ type Service struct {
 // DataServiceSpec defines the desired state of DataService
 type DataServiceSpec struct {
 	// 中间件 可选连接
-	Mysql *Middleware `json:"mysql"`
-	Uuc   *Middleware `json:"uuc"`
+	Mysql  *Middleware `json:"mysql"`
+	Uuc    *Middleware `json:"uuc"`
+	Eureka *Middleware `json:"eureka"`
+
 	// 服务
 	ApiManager    *Service `json:"api-manager"`
 	Auth          *Service `json:"auth"`
 	DsAdapter     *Service `json:"ds-adapter"`
-	Eureka        *Service `json:"eureka"`
 	EsAdapter     *Service `json:"es-adapter"`
 	TrdAdapter    *Service `json:"trd-adapter"`
 	GatewayMaster *Service `json:"gateway-master"`
