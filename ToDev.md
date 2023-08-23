@@ -118,18 +118,19 @@ git push
 
 2. uuc是否启用默认部署，如果不使用默认部署，需要提供Url、验证方法
 
+3. eureka信息：如果不使用默认部署，需要提供Url、验证方法
+
 
 服务信息：
 
 - api-manager信息：image、port、replica、nodeport（如需要）、env（如需要）
-- auth信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- ds-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- es-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- eureka信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- gateway-master信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- gateway-web信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- proxy信息：：image、port、replica、nodeport（如需要）、env（如需要）
-- trd-adapter信息：：image、port、replica、nodeport（如需要）、env（如需要）
+- auth信息：image、port、replica、nodeport（如需要）、env（如需要）
+- ds-adapter信息：image、port、replica、nodeport（如需要）、env（如需要）
+- es-adapter信息：image、port、replica、nodeport（如需要）、env（如需要）
+- gateway-master信息：image、port、replica、nodeport（如需要）、env（如需要）
+- gateway-web信息：image、port、replica、nodeport（如需要）、env（如需要）
+- proxy信息：image、port、replica、nodeport（如需要）、env（如需要）
+- trd-adapter信息：image、port、replica、nodeport（如需要）、env（如需要）
 
 还要提供前台信息：
 
@@ -338,3 +339,81 @@ make docker-build docker-push
 make deploy
 ```
 
+```
+[root@k8s-master d3os-operator]# kubectl get pods -n d3os-operator-system
+NAME                                               READY   STATUS    RESTARTS   AGE
+d3os-operator-controller-manager-b6cb76668-w9shx   2/2     Running   0          20h
+```
+
+创建一个dataservice服务
+
+```
+[root@k8s-master d3os-operator]# kubectl apply -f config/samples/d3os-product_v1_dataservice.yaml 
+dataservice.d3os-product.com.d3os/dataservice-sample created
+```
+
+查看创建逻辑
+
+```
+[root@k8s-master d3os-operator]# kubectl get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+api-manager-7d955b9657-fml45      1/1     Running   0          20h
+auth-64b5666f8b-k5dfv             1/1     Running   0          20h
+ds-adapter-7579b88dd8-qt7tp       1/1     Running   0          20h
+es-adapter-d6f9889c6-npwdd        1/1     Running   0          20h
+eureka-84bc9df868-fpnt5           1/1     Running   0          20h
+gateway-master-7694c87f87-kl8z2   1/1     Running   0          20h
+gateway-web-767b6b8bd8-wrs6g      1/1     Running   0          20h
+mysql-dataservice-0               1/1     Running   0          20h
+proxy-7d9fffd986-lwqtj            1/1     Running   0          20h
+trd-adapter-6bb48bfcfd-k74wh      1/1     Running   0          20h
+web-794c4d7f8b-8psm9              1/1     Running   0          20h
+```
+
+```
+[root@k8s-master d3os-operator]# kubectl get svc
+NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+api-manager         ClusterIP   10.96.153.202   <none>        9085/TCP         20h
+auth                ClusterIP   10.96.97.6      <none>        9081/TCP         20h
+ds-adapter          ClusterIP   10.96.200.158   <none>        9086/TCP         20h
+es-adapter          ClusterIP   10.96.237.192   <none>        9087/TCP         20h
+eureka              NodePort    10.96.45.67     <none>        8761:30161/TCP   20h
+gateway-master      ClusterIP   10.96.11.208    <none>        9184/TCP         20h
+gateway-web         ClusterIP   10.96.207.161   <none>        9084/TCP         20h
+kubernetes          ClusterIP   10.96.0.1       <none>        443/TCP          20h
+mysql-dataservice   ClusterIP   10.96.27.158    <none>        3306/TCP         20h
+proxy               ClusterIP   10.96.172.192   <none>        9094/TCP         20h
+trd-adapter         ClusterIP   10.96.205.10    <none>        9088/TCP         20h
+web                 NodePort    10.96.78.252    <none>        80:30160/TCP     20h
+```
+
+```
+[root@k8s-master d3os-operator]# kubectl get cm
+NAME                     DATA   AGE
+api-manager              1      20h
+auth                     1      20h
+ds-adapter               1      20h
+es-adapter               1      20h
+gateway-master           1      20h
+gateway-web              1      20h
+kube-root-ca.crt         1      20h
+mysql-dataservice        1      20h
+mysql-dataservice-init   6      20h
+proxy                    1      20h
+trd-adapter              1      20h
+trd-adapter-py           1      20h
+web                      1      20h
+web-template             1      20h
+```
+
+### 总结与展望
+
+至此，已经初步实现使用d3os-operator自动创建dataservice服务的需求；但仍存在一些问题需要改进：
+
+1.目前中间件服务和业务服务几乎是一同创建的，这不合理；业务容器应当确认中间件可用之后，再创建；
+
+2.在删除dataservice cr之后，相关的微服务并没有联动被删除，这不合理；
+
+3.目前没有响应dataservice cr的update方法。
+
+这些问题在未来都会解决，balabala。。。
