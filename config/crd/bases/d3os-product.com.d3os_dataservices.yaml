@@ -139,28 +139,32 @@ spec:
                 type: object
               eureka:
                 properties:
-                  env:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  image:
-                    type: string
+                  kind:
+                    type: integer
                   name:
                     type: string
-                  nodePort:
-                    format: int32
-                    type: integer
-                  port:
-                    format: int32
-                    type: integer
-                  replica:
-                    format: int32
-                    type: integer
+                  thirdParty:
+                    description: MiddlewareThirdParty 如果中间件采用真机部署，填写此对象
+                    properties:
+                      checkCMD:
+                        type: string
+                      custom:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      password:
+                        type: string
+                      url:
+                        type: string
+                      username:
+                        type: string
+                    required:
+                    - checkCMD
+                    - url
+                    type: object
                 required:
-                - image
+                - kind
                 - name
-                - port
-                - replica
                 type: object
               gateway-master:
                 properties:

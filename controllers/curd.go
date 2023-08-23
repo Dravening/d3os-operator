@@ -25,7 +25,7 @@ func cmdCall(command string) error {
 	return nil
 }
 
-func createIfNotExist(r *DataServiceReconciler, ctx context.Context, objKey types.NamespacedName, objType, obj client.Object, dsInstance *d3osoperatorv1.DataService) error {
+func createOrUpdate(r *DataServiceReconciler, ctx context.Context, objKey types.NamespacedName, objType, obj client.Object, dsInstance *d3osoperatorv1.DataService) error {
 	rLog := log.FromContext(ctx)
 	err := r.Get(ctx, objKey, objType)
 	if err != nil {
@@ -46,8 +46,13 @@ func createIfNotExist(r *DataServiceReconciler, ctx context.Context, objKey type
 			rLog.Error(err, fmt.Sprintf("creating obj %s error", obj.GetName()))
 			return err
 		}
+		return nil
 	}
-	// obj exists, do nothing
+	// obj exists, update
+	if err = r.Update(ctx, obj); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating obj %s error", obj.GetName()))
+		return err
+	}
 	return nil
 }
 
@@ -60,7 +65,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 		Name:      deploy.Name,
 		Namespace: deploy.Namespace,
 	}
-	if err := createIfNotExist(r, ctx, objKey, deployTemp, deploy, dsInstance); err != nil {
+	if err := createOrUpdate(r, ctx, objKey, deployTemp, deploy, dsInstance); err != nil {
 		return err
 	}
 	return nil
@@ -75,7 +80,7 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 		Name:      statefulSet.Name,
 		Namespace: statefulSet.Namespace,
 	}
-	if err := createIfNotExist(r, ctx, objKey, stateTemp, statefulSet, dsInstance); err != nil {
+	if err := createOrUpdate(r, ctx, objKey, stateTemp, statefulSet, dsInstance); err != nil {
 		return err
 	}
 	return nil
@@ -90,7 +95,7 @@ func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, d
 		Name:      daemonSet.Name,
 		Namespace: daemonSet.Namespace,
 	}
-	if err := createIfNotExist(r, ctx, objKey, daemonTemp, daemonSet, dsInstance); err != nil {
+	if err := createOrUpdate(r, ctx, objKey, daemonTemp, daemonSet, dsInstance); err != nil {
 		return err
 	}
 	return nil
@@ -105,7 +110,7 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, ser
 		Name:      service.Name,
 		Namespace: service.Namespace,
 	}
-	if err := createIfNotExist(r, ctx, objKey, serviceTemp, service, dsInstance); err != nil {
+	if err := createOrUpdate(r, ctx, objKey, serviceTemp, service, dsInstance); err != nil {
 		return err
 	}
 	return nil
@@ -120,7 +125,7 @@ func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, c
 		Name:      configMap.Name,
 		Namespace: configMap.Namespace,
 	}
-	if err := createIfNotExist(r, ctx, objKey, configMapTemp, configMap, dsInstance); err != nil {
+	if err := createOrUpdate(r, ctx, objKey, configMapTemp, configMap, dsInstance); err != nil {
 		return err
 	}
 	return nil
