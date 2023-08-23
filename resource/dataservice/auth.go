@@ -17,7 +17,7 @@ var authCM = CMData{
 	MountPath:       "/dataservice/auth/config/application.properties",
 	SubPath:         "application.properties",
 	Data: map[string]string{
-		"application.yml": `
+		"application.properties": `
 server.port=9081
 
 eureka.instance.prefer-ip-address=true
@@ -73,8 +73,8 @@ mybatis-plus.type-aliases-package=com.haier.cosmo.auth.beans
 jwt.token.secret=4d13002bd1ac7207f4c673e7c2764c57
 jwt.token.expiration=43200000
 
-userCenter.endpoint={{eurekaUrl}}/service/sys/user/getUserByToken
-userCenter.tenantInfo={{eurekaUrl}}/service/tenant/select
+userCenter.endpoint={{uucUrl}}/service/sys/user/getUserByToken
+userCenter.tenantInfo={{uucUrl}}/service/tenant/select
 `,
 	},
 }
