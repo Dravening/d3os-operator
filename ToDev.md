@@ -406,14 +406,38 @@ web                      1      20h
 web-template             1      20h
 ```
 
-### 总结与展望
+### 总结
+
+#### 1.注意事项
+
+- gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0国内无法pull下来，那就只能拉ks的镜像了
+
+  ```
+  nerdctl -n k8s.io  tag  kubesphere/kube-rbac-proxy:v0.8.0  gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+  ```
+
+- SetControllerReference方法本质上是给obj加了个label，所以一定要在创建/更新obj之前调用。
+
+  ```go
+  // 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+  if err = controllerutil.SetControllerReference(dsInstance, obj, r.Scheme); err != nil {
+      rLog.Error(err, fmt.Sprintf("set controller reference with %s error", obj.GetName()))
+      return err
+  }
+  
+  // 创建obj
+  if err = r.Create(ctx, obj); err != nil {
+      rLog.Error(err, fmt.Sprintf("creating obj %s error", obj.GetName()))
+      return err
+  }
+  ```
+
+#### 2.后续展望
 
 至此，已经初步实现使用d3os-operator自动创建dataservice服务的需求；但仍存在一些问题需要改进：
 
 1.目前中间件服务和业务服务几乎是一同创建的，这不合理；业务容器应当确认中间件可用之后，再创建；
 
-2.在删除dataservice cr之后，相关的微服务并没有联动被删除，这不合理；
-
-3.目前没有响应dataservice cr的update方法。
+2.目前没有响应dataservice cr的update方法。
 
 这些问题在未来都会解决，balabala。。。

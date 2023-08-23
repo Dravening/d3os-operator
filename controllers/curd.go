@@ -34,15 +34,16 @@ func createIfNotExist(r *DataServiceReconciler, ctx context.Context, objKey type
 			return err
 		}
 		rLog.Info(fmt.Sprintf("obj %s not found, creating...", obj.GetName()))
+
+		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+		if err = controllerutil.SetControllerReference(dsInstance, obj, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with %s error", obj.GetName()))
+			return err
+		}
+
 		// 创建obj
 		if err = r.Create(ctx, obj); err != nil {
 			rLog.Error(err, fmt.Sprintf("creating obj %s error", obj.GetName()))
-			return err
-		}
-		// 这一步非常关键！
-		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉
-		if err = controllerutil.SetControllerReference(dsInstance, obj, r.Scheme); err != nil {
-			rLog.Error(err, fmt.Sprintf("set controller reference with %s error", obj.GetName()))
 			return err
 		}
 	}
