@@ -49,6 +49,7 @@ func createOrUpdate(r *DataServiceReconciler, ctx context.Context, objKey types.
 		return nil
 	}
 	// obj exists, update
+	rLog.Info(fmt.Sprintf("即将update obj,其内容%v", obj))
 	if err = r.Update(ctx, obj); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating obj %s error", obj.GetName()))
 		return err

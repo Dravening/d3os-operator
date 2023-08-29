@@ -19,6 +19,7 @@ package v1
 import (
 	"d3os-operator/resource/dataservice"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -90,23 +91,57 @@ type DataServiceSpec struct {
 
 // DataServiceStatus defines the observed state of DataService
 type DataServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Mysql bool `json:"mysql"`
-	Uuc   bool `json:"uuc"`
-
-	ApiManagerStatus  bool `json:"api-manager"`
-	AuthStatus        bool `json:"auth"`
-	DsAdapterStatus   bool `json:"ds-adapter"`
-	EsAdapterStatus   bool `json:"es-adapter"`
-	Eureka            bool `json:"eureka"`
-	TrdAdapterStatus  bool `json:"trd-adapter"`
-	GatewayMastStatus bool `json:"gateway-master"`
-	GatewayWebStatus  bool `json:"gateway-web"`
-	ProxyStatus       bool `json:"proxy"`
-
-	Web bool `json:"web"`
+	// +optional
+	Conditions []DsBackendCondition `json:"conditions,omitempty"`
+	// +optional
+	Phase DsPhase `json:"phase,omitempty"`
+	// +optional
+	Message string `json:"message,omitempty"`
 }
+
+type DsBackendCondition struct {
+	// Type of order condition.   Type OrderConditionType `json:"type"`
+	// Phase of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	Reason string `json:"reason,omitempty"`
+	// A human-readable message indicating details about the transition.
+	Message string `json:"message,omitempty"`
+}
+
+const (
+	MysqlDone  DsPhase = "mysql已部署"
+	UucDone    DsPhase = "uuc已部署"
+	EurekaDone DsPhase = "eureka已部署"
+
+	ApiManagerDone    DsPhase = "api-manager已部署"
+	AuthDone          DsPhase = "auth已部署"
+	DsAdapterDone     DsPhase = "da-adapter已部署"
+	EsAdapterDone     DsPhase = "es-adapter已部署"
+	TrdAdapterDone    DsPhase = "trd-adapter已部署"
+	GatewayMasterDone DsPhase = "gateway-master已部署"
+	GatewayWebDone    DsPhase = "gateway-web已部署"
+	ProxyDone         DsPhase = "proxy已部署"
+	WebDone           DsPhase = "web已部署"
+
+	MessageNone          = "无特别信息"
+	MessageMysql         = "[mysql]->uuc->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageUuc           = "mysql->[uuc]->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageEureka        = "mysql->uuc->[eureka]->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageApiManager    = "mysql->uuc->eureka->[api-manager]->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageAuth          = "mysql->uuc->eureka->api-manager->[auth]->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageDsAdapter     = "mysql->uuc->eureka->api-manager->auth->[da-adapter]->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageEsAdapter     = "mysql->uuc->eureka->api-manager->auth->da-adapter->[es-adapter]->trd-adapter->gateway-master->gateway-web->proxy->web"
+	MessageTrdAdapter    = "mysql->uuc->eureka->api-manager->auth->da-adapter->es-adapter->[trd-adapter]->gateway-master->gateway-web->proxy->web"
+	MessageGatewayMaster = "mysql->uuc->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->[gateway-master]->gateway-web->proxy->web"
+	MessageGatewayWeb    = "mysql->uuc->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->[gateway-web]->proxy->web"
+	MessageProxy         = "mysql->uuc->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->[proxy]->web"
+	MessageWeb           = "mysql->uuc->eureka->api-manager->auth->da-adapter->es-adapter->trd-adapter->gateway-master->gateway-web->proxy->[web]"
+)
+
+type DsPhase string
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

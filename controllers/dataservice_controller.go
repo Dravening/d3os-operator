@@ -18,14 +18,16 @@ package controllers
 
 import (
 	"context"
+
+	d3osproductv1 "d3os-operator/api/v1"
+	"d3os-operator/resource/dataservice"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	d3osproductv1 "d3os-operator/api/v1"
 )
 
 // DataServiceReconciler reconciles a DataService object
@@ -88,10 +90,19 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Mysql, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.Mysql, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.UUC, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Eureka, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.Eureka, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -100,37 +111,64 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.ApiManager, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.ApiManager, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	// Auth
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Auth, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.Auth, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	// DsAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.DsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.DsAdapter, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	// EsAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.EsAdapter, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.EsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	// TrdAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.TrdAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.TrdAdapter, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	// GatewayMaster
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayMaster, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.GatewayMaster, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	// GatewayWeb
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayWeb, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
+	if err = updateStatus(ctx, r, dataservice.GatewayWeb, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
 	// Proxy
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Proxy, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.Proxy, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// 3.查找并部署web服务
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Web, dsInstance); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err = updateStatus(ctx, r, dataservice.Web, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 
