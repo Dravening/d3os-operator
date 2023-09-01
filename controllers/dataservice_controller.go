@@ -34,8 +34,8 @@ import (
 // DataServiceReconciler reconciles a DataService object
 type DataServiceReconciler struct {
 	client.Client
-	DsBackendMap map[string]*d3osoperatorv1.DataServiceBackend
-	Scheme       *runtime.Scheme
+	// DsBackendMap map[string]*d3osoperatorv1.DataServiceBackend
+	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=d3os-product.com.d3os,resources=dataservices,verbs=get;list;watch;create;update;patch;delete
@@ -78,13 +78,13 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// 调谐开始，首先要生成新的dataServiceBackend
 	dsBackend := dsInstance.Spec.NewDSBackend(req)
-	_, ok := r.DsBackendMap[req.String()]
-	if ok {
-		// what should I do？
-	} else {
-		// what should I do？
-	}
-	r.DsBackendMap[req.String()] = dsBackend
+	//_, ok := r.DsBackendMap[req.String()]
+	//if ok {
+	//	// what should I do？
+	//} else {
+	//	// what should I do？
+	//}
+	//r.DsBackendMap[req.String()] = dsBackend
 
 	// 目前并不准备比较dsBackend的各项指标；只需要实现kubectl update就好了
 	// 1.查找中间件实例是否存在	Mysql Uuc
