@@ -18,11 +18,7 @@ package controllers
 
 import (
 	"context"
-	"fmt"
-
 	d3osoperatorv1 "d3os-operator/api/v1"
-	"d3os-operator/resource/dataservice"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -91,100 +87,104 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Mysql, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Mysql, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Mysql))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.Mysql, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Mysql))
+	//	return ctrl.Result{}, err
+	//}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.UUC, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.UUC))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.UUC, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.UUC))
+	//	return ctrl.Result{}, err
+	//}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Eureka, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Eureka, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Eureka))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.Eureka, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Eureka))
+	//	return ctrl.Result{}, err
+	//}
 
 	// 2.调谐服务 ApiManager Auth DsAdapter EsAdapter Eureka TrdAdapter GatewayMaster GatewayWeb Proxy
 	// ApiManager
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.ApiManager, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.ApiManager, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.ApiManager))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.ApiManager, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.ApiManager))
+	//	return ctrl.Result{}, err
+	//}
 	// Auth
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Auth, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Auth, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Auth))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.Auth, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Auth))
+	//	return ctrl.Result{}, err
+	//}
 	// DsAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.DsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.DsAdapter, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.DsAdapter))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.DsAdapter, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.DsAdapter))
+	//	return ctrl.Result{}, err
+	//}
 	// EsAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.EsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.EsAdapter, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.EsAdapter))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.EsAdapter, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.EsAdapter))
+	//	return ctrl.Result{}, err
+	//}
 	// TrdAdapter
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.TrdAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.TrdAdapter, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.TrdAdapter))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.TrdAdapter, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.TrdAdapter))
+	//	return ctrl.Result{}, err
+	//}
 	// GatewayMaster
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayMaster, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.GatewayMaster, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayMaster))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.GatewayMaster, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayMaster))
+	//	return ctrl.Result{}, err
+	//}
 	// GatewayWeb
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayWeb, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.GatewayWeb, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayWeb))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.GatewayWeb, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayWeb))
+	//	return ctrl.Result{}, err
+	//}
 	// Proxy
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Proxy, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Proxy, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Proxy))
-		return ctrl.Result{}, err
-	}
+	//if err = updateStatus(ctx, r, dataservice.Proxy, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Proxy))
+	//	return ctrl.Result{}, err
+	//}
 
 	// 3.查找并部署web服务
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Web, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Web, req.NamespacedName); err != nil {
-		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Web))
+	//if err = updateStatus(ctx, r, dataservice.Web, req.NamespacedName); err != nil {
+	//	rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Web))
+	//	return ctrl.Result{}, err
+	//}
+
+	// 执行到这里我认为前面都没出问题, 那么我更新状态很合理吧。
+	if err = updateDsStatus(ctx, r, req.NamespacedName); err != nil {
 		return ctrl.Result{}, err
 	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -193,4 +193,23 @@ func (r *DataServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&d3osoperatorv1.DataService{}).
 		Complete(r)
+}
+
+func updateDsStatus(ctx context.Context, r *DataServiceReconciler, key client.ObjectKey) error {
+	// 先查询当前dataservice实例的状态
+	dsInstance := &d3osoperatorv1.DataService{}
+	err := r.Get(ctx, key, dsInstance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return err
+		}
+		return err
+	}
+	// 直接更新dsInstance的状态
+	dsInstance.Status.Phase = d3osoperatorv1.WebDone
+	dsInstance.Status.Message = d3osoperatorv1.MessageWeb
+	if err = r.Status().Update(ctx, dsInstance); err != nil {
+		return err
+	}
+	return nil
 }
