@@ -50,18 +50,28 @@ func CheckExistsOrCreateMidBackend(ctx context.Context, r *DataServiceReconciler
 	return nil
 }
 
-func updateStatus(ctx context.Context, r *DataServiceReconciler, dsBackendName dataservice.DSName, dsInstance *d3osoperatorv1.DataService) error {
+func updateStatus(ctx context.Context, r *DataServiceReconciler, dsBackendName dataservice.DSName, key client.ObjectKey) error {
 	// 不太优雅
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 	// 查询dsBackendName的deployment是否是1/1
 	objKey := types.NamespacedName{
 		Name:      dsBackendName.String(),
-		Namespace: dsInstance.Namespace,
+		Namespace: key.Namespace,
 	}
 	var objTarget client.Object
 	updateFlag := false
 	phase := d3osoperatorv1.MysqlDone
 	message := d3osoperatorv1.MessageNone
+
+	// 先查询当前dataservice实例的状态
+	dsInstance := &d3osoperatorv1.DataService{}
+	err := r.Get(ctx, key, dsInstance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return err
+		}
+		return err
+	}
 
 	// 分三种情况:
 	// 1.中间件, 三方, 直接通过验证
@@ -129,23 +139,23 @@ func updateStatus(ctx context.Context, r *DataServiceReconciler, dsBackendName d
 		message = d3osoperatorv1.MessageWeb
 		objTarget = &appsv1.Deployment{}
 	}
-	f := func() error {
+	f := func(ds *d3osoperatorv1.DataService) error {
 		// 直接更新dsInstance的状态
-		dsInstance.Status.Phase = phase
-		dsInstance.Status.Message = message
-		if err := r.Update(ctx, dsInstance); err != nil {
+		ds.Status.Phase = phase
+		ds.Status.Message = message
+		if err := r.Status().Update(ctx, ds); err != nil {
 			return err
 		}
 		return nil
 	}
 	if updateFlag {
-		if err := f(); err != nil {
+		if err := f(dsInstance); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err := r.Get(ctx, objKey, objTarget)
+	err = r.Get(ctx, objKey, objTarget)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
@@ -165,7 +175,7 @@ func updateStatus(ctx context.Context, r *DataServiceReconciler, dsBackendName d
 		}
 	}
 	if updateFlag {
-		if err = f(); err != nil {
+		if err = f(dsInstance); err != nil {
 			return err
 		}
 		return nil

@@ -233,7 +233,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	rLog.Info("start reconcile logic")
 
 	// 实例化数据结构
-	dsInstance := &d3osproductv1.DataService{}
+	dsInstance := &d3osoperatorv1.DataService{}
 
 	// 通过客户端工具查询，查询条件是否有dsInstance存在
 	err := r.Get(ctx, req.NamespacedName, dsInstance)

@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	d3osproductv1 "d3os-operator/api/v1"
+	d3osoperatorv1 "d3os-operator/api/v1"
 	"d3os-operator/resource/dataservice"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +34,7 @@ import (
 // DataServiceReconciler reconciles a DataService object
 type DataServiceReconciler struct {
 	client.Client
-	DsBackendMap map[string]*d3osproductv1.DataServiceBackend
+	DsBackendMap map[string]*d3osoperatorv1.DataServiceBackend
 	Scheme       *runtime.Scheme
 }
 
@@ -58,7 +58,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	rLog.Info("start reconcile logic")
 
 	// 实例化数据结构
-	dsInstance := &d3osproductv1.DataService{}
+	dsInstance := &d3osoperatorv1.DataService{}
 
 	// 通过客户端工具查询，查询条件是否有dsInstance存在
 	err := r.Get(ctx, req.NamespacedName, dsInstance)
@@ -91,21 +91,21 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Mysql, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Mysql, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.Mysql, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Mysql))
 		return ctrl.Result{}, err
 	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.UUC, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.UUC, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.UUC))
 		return ctrl.Result{}, err
 	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Eureka, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Eureka, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.Eureka, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Eureka))
 		return ctrl.Result{}, err
 	}
@@ -115,7 +115,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.ApiManager, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.ApiManager, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.ApiManager, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.ApiManager))
 		return ctrl.Result{}, err
 	}
@@ -123,7 +123,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Auth, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Auth, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.Auth, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Auth))
 		return ctrl.Result{}, err
 	}
@@ -131,7 +131,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.DsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.DsAdapter, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.DsAdapter, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.DsAdapter))
 		return ctrl.Result{}, err
 	}
@@ -139,7 +139,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.EsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.EsAdapter, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.EsAdapter, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.EsAdapter))
 		return ctrl.Result{}, err
 	}
@@ -147,7 +147,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.TrdAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.TrdAdapter, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.TrdAdapter, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.TrdAdapter))
 		return ctrl.Result{}, err
 	}
@@ -155,7 +155,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayMaster, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.GatewayMaster, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.GatewayMaster, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayMaster))
 		return ctrl.Result{}, err
 	}
@@ -163,7 +163,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayWeb, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.GatewayWeb, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.GatewayWeb, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayWeb))
 		return ctrl.Result{}, err
 	}
@@ -171,7 +171,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Proxy, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Proxy, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.Proxy, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Proxy))
 		return ctrl.Result{}, err
 	}
@@ -180,7 +180,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Web, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err = updateStatus(ctx, r, dataservice.Web, dsInstance); err != nil {
+	if err = updateStatus(ctx, r, dataservice.Web, req.NamespacedName); err != nil {
 		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Web))
 		return ctrl.Result{}, err
 	}
@@ -191,6 +191,6 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 // SetupWithManager sets up the controller with the Manager.
 func (r *DataServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&d3osproductv1.DataService{}).
+		For(&d3osoperatorv1.DataService{}).
 		Complete(r)
 }
