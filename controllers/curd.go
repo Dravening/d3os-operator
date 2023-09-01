@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 
@@ -27,32 +28,35 @@ func cmdCall(command string) error {
 
 func createOrUpdate(r *DataServiceReconciler, ctx context.Context, objKey types.NamespacedName, objType, obj client.Object, dsInstance *d3osoperatorv1.DataService) error {
 	rLog := log.FromContext(ctx)
+	objName := obj.GetName()
 	err := r.Get(ctx, objKey, objType)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			rLog.Error(err, fmt.Sprintf("getting obj %s error", obj.GetName()))
+			rLog.Error(err, fmt.Sprintf("getting obj %s error", objName))
 			return err
 		}
-		rLog.Info(fmt.Sprintf("obj %s not found, creating...", obj.GetName()))
+		rLog.Info(fmt.Sprintf("obj %s not found, creating...", objName))
 
 		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
 		if err = controllerutil.SetControllerReference(dsInstance, obj, r.Scheme); err != nil {
-			rLog.Error(err, fmt.Sprintf("set controller reference with %s error", obj.GetName()))
+			rLog.Error(err, fmt.Sprintf("set controller reference with %s error", objName))
 			return err
 		}
 
 		// 创建obj
 		if err = r.Create(ctx, obj); err != nil {
-			rLog.Error(err, fmt.Sprintf("creating obj %s error", obj.GetName()))
+			rLog.Error(err, fmt.Sprintf("creating obj %s error", objName))
 			return err
 		}
 		return nil
 	}
-	// obj exists, update
-	// 这里必须提供对象的 resourceVersion 字段的值
-	obj.SetResourceVersion(objType.GetResourceVersion())
-	rLog.Info(fmt.Sprintf("即将update obj,其内容%v", obj))
-	if err = r.Update(ctx, obj); err != nil {
+	// obj exists, patch
+	rLog.Info(fmt.Sprintf("即将update obj %s", objName))
+	patchBytes, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	if err = r.Patch(ctx, objType, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating obj %s error", obj.GetName()))
 		return err
 	}
