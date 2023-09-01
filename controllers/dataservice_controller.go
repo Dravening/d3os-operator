@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	d3osproductv1 "d3os-operator/api/v1"
 	"d3os-operator/resource/dataservice"
@@ -91,18 +92,21 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.Mysql, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Mysql))
 		return ctrl.Result{}, err
 	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.UUC, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.UUC))
 		return ctrl.Result{}, err
 	}
 	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Eureka, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.Eureka, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Eureka))
 		return ctrl.Result{}, err
 	}
 
@@ -112,6 +116,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.ApiManager, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.ApiManager))
 		return ctrl.Result{}, err
 	}
 	// Auth
@@ -119,6 +124,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.Auth, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Auth))
 		return ctrl.Result{}, err
 	}
 	// DsAdapter
@@ -126,6 +132,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.DsAdapter, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.DsAdapter))
 		return ctrl.Result{}, err
 	}
 	// EsAdapter
@@ -133,6 +140,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.EsAdapter, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.EsAdapter))
 		return ctrl.Result{}, err
 	}
 	// TrdAdapter
@@ -140,6 +148,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.TrdAdapter, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.TrdAdapter))
 		return ctrl.Result{}, err
 	}
 	// GatewayMaster
@@ -147,6 +156,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.GatewayMaster, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayMaster))
 		return ctrl.Result{}, err
 	}
 	// GatewayWeb
@@ -154,6 +164,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.GatewayWeb, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.GatewayWeb))
 		return ctrl.Result{}, err
 	}
 	// Proxy
@@ -161,6 +172,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.Proxy, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Proxy))
 		return ctrl.Result{}, err
 	}
 
@@ -169,6 +181,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	if err = updateStatus(ctx, r, dataservice.Web, dsInstance); err != nil {
+		rLog.Error(err, fmt.Sprintf("error updating dataservice status after create %s", dataservice.Web))
 		return ctrl.Result{}, err
 	}
 
