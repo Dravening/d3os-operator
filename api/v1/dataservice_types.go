@@ -143,6 +143,11 @@ const (
 
 type DsPhase string
 
+type DsStatus struct {
+	Phase   DsPhase
+	Message string
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
