@@ -16,7 +16,17 @@ spec:
     singular: dataservice
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.message
+      name: Message
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: DataService is the Schema for the dataservices API
@@ -368,46 +378,34 @@ spec:
           status:
             description: DataServiceStatus defines the observed state of DataService
             properties:
-              api-manager:
-                type: boolean
-              auth:
-                type: boolean
-              ds-adapter:
-                type: boolean
-              es-adapter:
-                type: boolean
-              eureka:
-                type: boolean
-              gateway-master:
-                type: boolean
-              gateway-web:
-                type: boolean
-              mysql:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
-                type: boolean
-              proxy:
-                type: boolean
-              trd-adapter:
-                type: boolean
-              uuc:
-                type: boolean
-              web:
-                type: boolean
-            required:
-            - api-manager
-            - auth
-            - ds-adapter
-            - es-adapter
-            - eureka
-            - gateway-master
-            - gateway-web
-            - mysql
-            - proxy
-            - trd-adapter
-            - uuc
-            - web
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human-readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Type of order condition.   Type OrderConditionType
+                        `json:"type"` Phase of the condition, one of True, False,
+                        Unknown.
+                      type: string
+                  required:
+                  - status
+                  type: object
+                type: array
+              message:
+                type: string
+              phase:
+                type: string
             type: object
         type: object
     served: true
