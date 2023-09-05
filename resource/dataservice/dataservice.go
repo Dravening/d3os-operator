@@ -16,6 +16,7 @@ const (
 	Mysql  DSName = "mysql-dataservice"
 	UUC    DSName = "uuc"
 	Eureka DSName = "eureka"
+	None   DSName = "none"
 )
 
 const (

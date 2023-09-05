@@ -93,10 +93,8 @@ type DataServiceSpec struct {
 type DataServiceStatus struct {
 	// +optional
 	Conditions []DsBackendCondition `json:"conditions,omitempty"`
-	// +optional
-	Phase DsPhase `json:"phase,omitempty"`
-	// +optional
-	Message string `json:"message,omitempty"`
+	Phase      DsPhase              `json:"phase,omitempty"`
+	Message    string               `json:"message,omitempty"`
 }
 
 type DsBackendCondition struct {
@@ -112,6 +110,7 @@ type DsBackendCondition struct {
 }
 
 const (
+	DoneNone   DsPhase = "等待部署"
 	MysqlDone  DsPhase = "mysql已部署"
 	UucDone    DsPhase = "uuc已部署"
 	EurekaDone DsPhase = "eureka已部署"
@@ -150,6 +149,9 @@ type DsStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+//+kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.message"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // DataService is the Schema for the dataservices API
 type DataService struct {

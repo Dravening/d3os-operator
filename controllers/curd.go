@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os/exec"
 
 	d3osoperatorv1 "d3os-operator/api/v1"
@@ -11,6 +12,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,6 +21,7 @@ import (
 )
 
 var statusMap = map[dataservice.DSName]d3osoperatorv1.DsStatus{
+	dataservice.None:   {Phase: d3osoperatorv1.DoneNone, Message: d3osoperatorv1.MessageNone},
 	dataservice.Mysql:  {Phase: d3osoperatorv1.MysqlDone, Message: d3osoperatorv1.MessageMysql},
 	dataservice.UUC:    {Phase: d3osoperatorv1.UucDone, Message: d3osoperatorv1.MessageUuc},
 	dataservice.Eureka: {Phase: d3osoperatorv1.EurekaDone, Message: d3osoperatorv1.MessageEureka},
@@ -43,53 +46,49 @@ func cmdCall(command string) error {
 	return nil
 }
 
-func createOrUpdate(r *DataServiceReconciler, ctx context.Context, objKey types.NamespacedName, objType, obj client.Object, dsInstance *d3osoperatorv1.DataService) error {
+func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, newDeploy *appsv1.Deployment, dsInstance *d3osoperatorv1.DataService) error {
+	if newDeploy == nil {
+		return fmt.Errorf("spec deployment info doesn't exist, please check crd config")
+	}
+	objKey := types.NamespacedName{
+		Name:      newDeploy.Name,
+		Namespace: newDeploy.Namespace,
+	}
 	rLog := log.FromContext(ctx)
-	objName := obj.GetName()
-	err := r.Get(ctx, objKey, objType)
+	objName := newDeploy.GetName()
+	oldDeploy := &appsv1.Deployment{}
+	err := r.Get(ctx, objKey, oldDeploy)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			rLog.Error(err, fmt.Sprintf("getting obj %s error", objName))
+			rLog.Error(err, fmt.Sprintf("getting deployment %s error", objName))
 			return err
 		}
-		rLog.Info(fmt.Sprintf("obj %s not found, creating...", objName))
-
+		rLog.Info(fmt.Sprintf("deployment %s not found, creating...", objName))
 		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
-		if err = controllerutil.SetControllerReference(dsInstance, obj, r.Scheme); err != nil {
-			rLog.Error(err, fmt.Sprintf("set controller reference with %s error", objName))
+		if err = controllerutil.SetControllerReference(dsInstance, newDeploy, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with deployment %s error", objName))
 			return err
 		}
-
 		// 创建obj
-		if err = r.Create(ctx, obj); err != nil {
-			rLog.Error(err, fmt.Sprintf("creating obj %s error", objName))
+		if err = r.Create(ctx, newDeploy); err != nil {
+			rLog.Error(err, fmt.Sprintf("creating deployment %s error", objName))
 			return err
 		}
 		return nil
 	}
-	// obj exists, patch
-	rLog.Info(fmt.Sprintf("即将update obj %s", objName))
-	patchBytes, err := json.Marshal(obj)
+	// obj exists
+	newDeploy.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	if equality.Semantic.DeepEqual(oldDeploy.Spec, newDeploy.Spec) {
+		return nil
+	}
+	// need patch
+	rLog.Info(fmt.Sprintf("即将update deployment %s", objName))
+	patchBytes, err := json.Marshal(newDeploy)
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, objType, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
-		rLog.Error(err, fmt.Sprintf("updating obj %s error", obj.GetName()))
-		return err
-	}
-	return nil
-}
-
-func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, deploy *appsv1.Deployment, dsInstance *d3osoperatorv1.DataService) error {
-	if deploy == nil {
-		return fmt.Errorf("spec Deployment info doesn't exist, please check crd config")
-	}
-	deployTemp := &appsv1.Deployment{}
-	objKey := types.NamespacedName{
-		Name:      deploy.Name,
-		Namespace: deploy.Namespace,
-	}
-	if err := createOrUpdate(r, ctx, objKey, deployTemp, deploy, dsInstance); err != nil {
+	if err = r.Patch(ctx, oldDeploy, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating deployment %s error", objName))
 		return err
 	}
 	return nil
@@ -98,7 +97,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 func checkDeploymentStatus(ctx context.Context, r *DataServiceReconciler, deploy *appsv1.Deployment) error {
 	rLog := log.FromContext(ctx)
 	if deploy == nil {
-		return fmt.Errorf("spec Deployment info doesn't exist, please check crd config")
+		return fmt.Errorf("spec deployment info doesn't exist, please check crd config")
 	}
 	deployNew := &appsv1.Deployment{}
 	objKey := types.NamespacedName{
@@ -108,10 +107,10 @@ func checkDeploymentStatus(ctx context.Context, r *DataServiceReconciler, deploy
 	objName := objKey.String()
 	if err := r.Get(ctx, objKey, deployNew); err != nil {
 		if !errors.IsNotFound(err) {
-			rLog.Error(err, fmt.Sprintf("getting obj %s error", objName))
+			rLog.Error(err, fmt.Sprintf("getting deployment %s error", objName))
 			return err
 		}
-		rLog.Error(err, fmt.Sprintf("obj %s not found, try reconcile", objName))
+		rLog.Error(err, fmt.Sprintf("deployment %s not found, try reconcile", objName))
 		return err
 	}
 	if deployNew.Status.AvailableReplicas < 1 {
@@ -121,16 +120,49 @@ func checkDeploymentStatus(ctx context.Context, r *DataServiceReconciler, deploy
 	return nil
 }
 
-func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, statefulSet *appsv1.StatefulSet, dsInstance *d3osoperatorv1.DataService) error {
-	if statefulSet == nil {
-		return fmt.Errorf("spec StatefulSet info doesn't exist, please check crd config")
+func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, newStatefulSet *appsv1.StatefulSet, dsInstance *d3osoperatorv1.DataService) error {
+	if newStatefulSet == nil {
+		return fmt.Errorf("spec statefulSet info doesn't exist, please check crd config")
 	}
-	stateTemp := &appsv1.StatefulSet{}
 	objKey := types.NamespacedName{
-		Name:      statefulSet.Name,
-		Namespace: statefulSet.Namespace,
+		Name:      newStatefulSet.Name,
+		Namespace: newStatefulSet.Namespace,
 	}
-	if err := createOrUpdate(r, ctx, objKey, stateTemp, statefulSet, dsInstance); err != nil {
+	rLog := log.FromContext(ctx)
+	objName := newStatefulSet.GetName()
+	oldStatefulSet := &appsv1.StatefulSet{}
+	err := r.Get(ctx, objKey, oldStatefulSet)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			rLog.Error(err, fmt.Sprintf("getting statefulSet %s error", objName))
+			return err
+		}
+		rLog.Info(fmt.Sprintf("statefulSet %s not found, creating...", objName))
+		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+		if err = controllerutil.SetControllerReference(dsInstance, newStatefulSet, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with statefulSet %s error", objName))
+			return err
+		}
+		// 创建obj
+		if err = r.Create(ctx, newStatefulSet); err != nil {
+			rLog.Error(err, fmt.Sprintf("creating statefulSet %s error", objName))
+			return err
+		}
+		return nil
+	}
+	// obj exists
+	newStatefulSet.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	if equality.Semantic.DeepEqual(oldStatefulSet.Spec, newStatefulSet.Spec) {
+		return nil
+	}
+	// need patch
+	rLog.Info(fmt.Sprintf("即将update statefulSet %s", objName))
+	patchBytes, err := json.Marshal(newStatefulSet)
+	if err != nil {
+		return err
+	}
+	if err = r.Patch(ctx, oldStatefulSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating statefulSet %s error", objName))
 		return err
 	}
 	return nil
@@ -162,16 +194,49 @@ func checkStatefulSetStatus(ctx context.Context, r *DataServiceReconciler, state
 	return nil
 }
 
-func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, daemonSet *appsv1.DaemonSet, dsInstance *d3osoperatorv1.DataService) error {
-	if daemonSet == nil {
+func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, newDaemonSet *appsv1.DaemonSet, dsInstance *d3osoperatorv1.DataService) error {
+	if newDaemonSet == nil {
 		return fmt.Errorf("spec DaemonSet info doesn't exist, please check crd config")
 	}
-	daemonTemp := &appsv1.DaemonSet{}
 	objKey := types.NamespacedName{
-		Name:      daemonSet.Name,
-		Namespace: daemonSet.Namespace,
+		Name:      newDaemonSet.Name,
+		Namespace: newDaemonSet.Namespace,
 	}
-	if err := createOrUpdate(r, ctx, objKey, daemonTemp, daemonSet, dsInstance); err != nil {
+	rLog := log.FromContext(ctx)
+	objName := newDaemonSet.GetName()
+	oldDaemonSet := &appsv1.DaemonSet{}
+	err := r.Get(ctx, objKey, oldDaemonSet)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			rLog.Error(err, fmt.Sprintf("getting daemonSet %s error", objName))
+			return err
+		}
+		rLog.Info(fmt.Sprintf("daemonSet %s not found, creating...", objName))
+		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+		if err = controllerutil.SetControllerReference(dsInstance, newDaemonSet, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with daemonSet %s error", objName))
+			return err
+		}
+		// 创建obj
+		if err = r.Create(ctx, newDaemonSet); err != nil {
+			rLog.Error(err, fmt.Sprintf("creating daemonSet %s error", objName))
+			return err
+		}
+		return nil
+	}
+	// obj exists
+	newDaemonSet.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	if equality.Semantic.DeepEqual(oldDaemonSet.Spec, newDaemonSet.Spec) {
+		return nil
+	}
+	// need patch
+	rLog.Info(fmt.Sprintf("即将update daemonSet %s", objName))
+	patchBytes, err := json.Marshal(newDaemonSet)
+	if err != nil {
+		return err
+	}
+	if err = r.Patch(ctx, oldDaemonSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating daemonSet %s error", objName))
 		return err
 	}
 	return nil
@@ -203,37 +268,102 @@ func checkDaemonSetStatus(ctx context.Context, r *DataServiceReconciler, daemonS
 	return nil
 }
 
-func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, service *corev1.Service, dsInstance *d3osoperatorv1.DataService) error {
-	if service == nil {
+func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, newService *corev1.Service, dsInstance *d3osoperatorv1.DataService) error {
+	if newService == nil {
 		return fmt.Errorf("spec Service info doesn't exist, please check crd config")
 	}
-	serviceTemp := &corev1.Service{}
 	objKey := types.NamespacedName{
-		Name:      service.Name,
-		Namespace: service.Namespace,
+		Name:      newService.Name,
+		Namespace: newService.Namespace,
 	}
-	if err := createOrUpdate(r, ctx, objKey, serviceTemp, service, dsInstance); err != nil {
+	rLog := log.FromContext(ctx)
+	objName := newService.GetName()
+	oldService := &corev1.Service{}
+	err := r.Get(ctx, objKey, oldService)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			rLog.Error(err, fmt.Sprintf("getting service %s error", objName))
+			return err
+		}
+		rLog.Info(fmt.Sprintf("service %s not found, creating...", objName))
+		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+		if err = controllerutil.SetControllerReference(dsInstance, newService, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with service %s error", objName))
+			return err
+		}
+		// 创建obj
+		if err = r.Create(ctx, newService); err != nil {
+			rLog.Error(err, fmt.Sprintf("creating service %s error", objName))
+			return err
+		}
+		return nil
+	}
+	// obj exists
+	if equality.Semantic.DeepEqual(oldService.Spec, newService.Spec) {
+		return nil
+	}
+	// need patch
+	rLog.Info(fmt.Sprintf("即将update service %s", objName))
+	patchBytes, err := json.Marshal(newService)
+	if err != nil {
+		return err
+	}
+	if err = r.Patch(ctx, oldService, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating service %s error", objName))
 		return err
 	}
 	return nil
 }
 
-func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, configMap *corev1.ConfigMap, dsInstance *d3osoperatorv1.DataService) error {
-	if configMap == nil {
+func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, newConfigMap *corev1.ConfigMap, dsInstance *d3osoperatorv1.DataService) error {
+	if newConfigMap == nil {
 		return fmt.Errorf("spec ConfigMap info doesn't exist, please check crd config")
 	}
-	configMapTemp := &corev1.ConfigMap{}
 	objKey := types.NamespacedName{
-		Name:      configMap.Name,
-		Namespace: configMap.Namespace,
+		Name:      newConfigMap.Name,
+		Namespace: newConfigMap.Namespace,
 	}
-	if err := createOrUpdate(r, ctx, objKey, configMapTemp, configMap, dsInstance); err != nil {
+	rLog := log.FromContext(ctx)
+	objName := newConfigMap.GetName()
+	oldConfigMap := &corev1.ConfigMap{}
+	err := r.Get(ctx, objKey, oldConfigMap)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			rLog.Error(err, fmt.Sprintf("getting configMap %s error", objName))
+			return err
+		}
+		rLog.Info(fmt.Sprintf("configMap %s not found, creating...", objName))
+		// 建立关联后，删除dataservice资源时就会将相应的obj也删除掉; 这一步会在obj上增加controllerRef标签
+		if err = controllerutil.SetControllerReference(dsInstance, newConfigMap, r.Scheme); err != nil {
+			rLog.Error(err, fmt.Sprintf("set controller reference with configMap %s error", objName))
+			return err
+		}
+		// 创建obj
+		if err = r.Create(ctx, newConfigMap); err != nil {
+			rLog.Error(err, fmt.Sprintf("creating configMap %s error", objName))
+			return err
+		}
+		return nil
+	}
+	// obj exists
+	if equality.Semantic.DeepEqual(oldConfigMap.Data, newConfigMap.Data) {
+		return nil
+	}
+	// need patch
+	rLog.Info(fmt.Sprintf("即将update configMap %s", objName))
+	patchBytes, err := json.Marshal(newConfigMap)
+	if err != nil {
+		return err
+	}
+	if err = r.Patch(ctx, oldConfigMap, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		rLog.Error(err, fmt.Sprintf("updating configMap %s error", objName))
 		return err
 	}
 	return nil
 }
 
-func updateDsStatus(ctx context.Context, r *DataServiceReconciler, key client.ObjectKey, dsName dataservice.DSName) error {
+func updateDsStatus(ctx context.Context, r *DataServiceReconciler, key client.ObjectKey, oldDsName, dsName dataservice.DSName) error {
+	rLog := log.FromContext(ctx)
 	// 先查询当前dataservice实例的状态
 	dsInstance := &d3osoperatorv1.DataService{}
 	err := r.Get(ctx, key, dsInstance)
@@ -243,11 +373,14 @@ func updateDsStatus(ctx context.Context, r *DataServiceReconciler, key client.Ob
 		}
 		return err
 	}
-	// 直接更新dsInstance的状态
-	dsInstance.Status.Phase = statusMap[dsName].Phase
-	dsInstance.Status.Message = statusMap[dsName].Message
-	if err = r.Status().Update(ctx, dsInstance); err != nil {
-		return err
+	if dsInstance.Status.Phase == statusMap[oldDsName].Phase || dsInstance.Status.Phase == "" {
+		// 如果状态是前置状态，更新到当前状态
+		dsInstance.Status.Phase = statusMap[dsName].Phase
+		dsInstance.Status.Message = statusMap[dsName].Message
+		rLog.Info(fmt.Sprintf("即将update dataservice %s的状态至 %s", dsInstance.GetName(), statusMap[dsName].Phase))
+		if err = r.Status().Update(ctx, dsInstance); err != nil {
+			return err
+		}
 	}
 	return nil
 }

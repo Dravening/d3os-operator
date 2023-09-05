@@ -87,7 +87,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Mysql, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Mysql); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.None, dataservice.Mysql); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Uuc
@@ -97,7 +97,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Uuc, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.UUC); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Mysql, dataservice.UUC); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Eureka
@@ -107,7 +107,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Eureka, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Eureka); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.UUC, dataservice.Eureka); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -119,7 +119,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.ApiManager, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.ApiManager); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Eureka, dataservice.ApiManager); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Auth
@@ -129,7 +129,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Auth, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Auth); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.ApiManager, dataservice.Auth); err != nil {
 		return ctrl.Result{}, err
 	}
 	// DsAdapter
@@ -139,7 +139,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.DsAdapter, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.DsAdapter); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Auth, dataservice.DsAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// EsAdapter
@@ -149,7 +149,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.EsAdapter, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.EsAdapter); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.DsAdapter, dataservice.EsAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// TrdAdapter
@@ -159,7 +159,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.TrdAdapter, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.TrdAdapter); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.EsAdapter, dataservice.TrdAdapter); err != nil {
 		return ctrl.Result{}, err
 	}
 	// GatewayMaster
@@ -169,7 +169,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.GatewayMaster, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.GatewayMaster); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.TrdAdapter, dataservice.GatewayMaster); err != nil {
 		return ctrl.Result{}, err
 	}
 	// GatewayWeb
@@ -179,7 +179,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.GatewayWeb, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.GatewayWeb); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.GatewayMaster, dataservice.GatewayWeb); err != nil {
 		return ctrl.Result{}, err
 	}
 	// Proxy
@@ -189,7 +189,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Proxy, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Proxy); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.GatewayWeb, dataservice.Proxy); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -200,7 +200,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Web, 5*time.Second); err != nil {
 		return ctrl.Result{RequeueAfter: time.Second * 10}, err
 	}
-	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Web); err != nil {
+	if err = updateDsStatus(ctx, r, req.NamespacedName, dataservice.Proxy, dataservice.Web); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
