@@ -78,6 +78,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 	}
 	// obj exists
 	newDeploy.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	rLog.V(1).Info(fmt.Sprintf("比较 deployment %s 的内容:\noldDeploy.Spec: %v\nnewDeploy.Spec: %v", objName, oldDeploy.Spec, newDeploy.Spec))
 	if equality.Semantic.DeepEqual(oldDeploy.Spec, newDeploy.Spec) {
 		return nil
 	}
@@ -152,6 +153,7 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 	}
 	// obj exists
 	newStatefulSet.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	rLog.V(1).Info(fmt.Sprintf("比较 statefulSet %s 的内容:\noldStatefulSet.Spec: %v\nnewStatefulSet.Spec: %v", objName, oldStatefulSet.Spec, newStatefulSet.Spec))
 	if equality.Semantic.DeepEqual(oldStatefulSet.Spec, newStatefulSet.Spec) {
 		return nil
 	}
@@ -299,6 +301,7 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, new
 		return nil
 	}
 	// obj exists
+	rLog.V(1).Info(fmt.Sprintf("比较 service %s 的内容:\noldService.Spec: %v\nnewService.Spec: %v", objName, oldService.Spec, newService.Spec))
 	if equality.Semantic.DeepEqual(oldService.Spec, newService.Spec) {
 		return nil
 	}
