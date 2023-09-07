@@ -34,8 +34,8 @@ import (
 // DataServiceReconciler reconciles a DataService object
 type DataServiceReconciler struct {
 	client.Client
-	// DsBackendMap map[string]*d3osoperatorv1.DataServiceBackend
-	Scheme *runtime.Scheme
+	DsBackendMap map[string]*d3osoperatorv1.DataServiceBackend
+	Scheme       *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=d3os-product.com.d3os,resources=dataservices,verbs=get;list;watch;create;update;patch;delete
@@ -79,9 +79,16 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// 调谐开始，首先要生成新的dataServiceBackend
 	dsBackend := dsInstance.Spec.NewDSBackend(req)
 
+	// 获取旧的dsBackend
+	oldDsBackend, ok := r.DsBackendMap[req.String()]
+	if !ok {
+		oldDsBackend = dsBackend
+	}
+	r.DsBackendMap[req.String()] = dsBackend
+
 	// 1.中间件 Mysql Uuc Eureka
 	// Mysql
-	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Mysql, dsInstance); err != nil {
+	if err = CheckExistsOrCreateMidBackend(ctx, r, oldDsBackend.Mysql, dsBackend.Mysql, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Mysql, 5*time.Second); err != nil {
@@ -91,7 +98,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// Uuc
-	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Uuc, dsInstance); err != nil {
+	if err = CheckExistsOrCreateMidBackend(ctx, r, oldDsBackend.Uuc, dsBackend.Uuc, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Uuc, 5*time.Second); err != nil {
@@ -101,7 +108,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// Eureka
-	if err = CheckExistsOrCreateMidBackend(ctx, r, dsBackend.Eureka, dsInstance); err != nil {
+	if err = CheckExistsOrCreateMidBackend(ctx, r, oldDsBackend.Eureka, dsBackend.Eureka, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckMidBackendStatus(ctx, r, dsBackend.Eureka, 5*time.Second); err != nil {
@@ -113,7 +120,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// 2.调谐服务 ApiManager Auth DsAdapter EsAdapter Eureka TrdAdapter GatewayMaster GatewayWeb Proxy
 	// ApiManager
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.ApiManager, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.ApiManager, dsBackend.ApiManager, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.ApiManager, 5*time.Second); err != nil {
@@ -123,7 +130,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// Auth
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Auth, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.Auth, dsBackend.Auth, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Auth, 5*time.Second); err != nil {
@@ -133,7 +140,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// DsAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.DsAdapter, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.DsAdapter, dsBackend.DsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.DsAdapter, 5*time.Second); err != nil {
@@ -143,7 +150,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// EsAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.EsAdapter, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.EsAdapter, dsBackend.EsAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.EsAdapter, 5*time.Second); err != nil {
@@ -153,7 +160,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// TrdAdapter
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.TrdAdapter, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.TrdAdapter, dsBackend.TrdAdapter, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.TrdAdapter, 5*time.Second); err != nil {
@@ -163,7 +170,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// GatewayMaster
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayMaster, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.GatewayMaster, dsBackend.GatewayMaster, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.GatewayMaster, 5*time.Second); err != nil {
@@ -173,7 +180,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// GatewayWeb
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.GatewayWeb, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.GatewayWeb, dsBackend.GatewayWeb, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.GatewayWeb, 5*time.Second); err != nil {
@@ -183,7 +190,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 	// Proxy
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Proxy, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.Proxy, dsBackend.Proxy, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Proxy, 5*time.Second); err != nil {
@@ -194,7 +201,7 @@ func (r *DataServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// 3.查找并部署web服务
-	if err = CheckExistsOrCreateSvcBackend(ctx, r, dsBackend.Web, dsInstance); err != nil {
+	if err = CheckExistsOrCreateAppBackend(ctx, r, oldDsBackend.Web, dsBackend.Web, dsInstance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err = CheckAppBackendStatus(ctx, r, dsBackend.Web, 5*time.Second); err != nil {

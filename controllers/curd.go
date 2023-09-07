@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os/exec"
 
 	d3osoperatorv1 "d3os-operator/api/v1"
@@ -46,7 +45,7 @@ func cmdCall(command string) error {
 	return nil
 }
 
-func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, newDeploy *appsv1.Deployment, dsInstance *d3osoperatorv1.DataService) error {
+func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, oldDeploy, newDeploy *appsv1.Deployment, dsInstance *d3osoperatorv1.DataService) error {
 	if newDeploy == nil {
 		return fmt.Errorf("spec deployment info doesn't exist, please check crd config")
 	}
@@ -56,8 +55,8 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 	}
 	rLog := log.FromContext(ctx)
 	objName := newDeploy.GetName()
-	oldDeploy := &appsv1.Deployment{}
-	err := r.Get(ctx, objKey, oldDeploy)
+	currentDeploy := &appsv1.Deployment{}
+	err := r.Get(ctx, objKey, currentDeploy)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			rLog.Error(err, fmt.Sprintf("getting deployment %s error", objName))
@@ -76,9 +75,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 		}
 		return nil
 	}
-	// obj exists
-	newDeploy.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
-	rLog.V(1).Info(fmt.Sprintf("比较 deployment %s 的内容:\noldDeploy.Spec: %v\nnewDeploy.Spec: %v", objName, oldDeploy.Spec, newDeploy.Spec))
+	// obj exists, 需要判断是否更新
 	if equality.Semantic.DeepEqual(oldDeploy.Spec, newDeploy.Spec) {
 		return nil
 	}
@@ -88,7 +85,7 @@ func createDeploymentIfNotExists(ctx context.Context, r *DataServiceReconciler, 
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, oldDeploy, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err = r.Patch(ctx, currentDeploy, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating deployment %s error", objName))
 		return err
 	}
@@ -121,7 +118,7 @@ func checkDeploymentStatus(ctx context.Context, r *DataServiceReconciler, deploy
 	return nil
 }
 
-func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, newStatefulSet *appsv1.StatefulSet, dsInstance *d3osoperatorv1.DataService) error {
+func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler, oldStatefulSet, newStatefulSet *appsv1.StatefulSet, dsInstance *d3osoperatorv1.DataService) error {
 	if newStatefulSet == nil {
 		return fmt.Errorf("spec statefulSet info doesn't exist, please check crd config")
 	}
@@ -131,8 +128,8 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 	}
 	rLog := log.FromContext(ctx)
 	objName := newStatefulSet.GetName()
-	oldStatefulSet := &appsv1.StatefulSet{}
-	err := r.Get(ctx, objKey, oldStatefulSet)
+	currentStatefulSet := &appsv1.StatefulSet{}
+	err := r.Get(ctx, objKey, currentStatefulSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			rLog.Error(err, fmt.Sprintf("getting statefulSet %s error", objName))
@@ -151,9 +148,7 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 		}
 		return nil
 	}
-	// obj exists
-	newStatefulSet.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
-	rLog.V(1).Info(fmt.Sprintf("比较 statefulSet %s 的内容:\noldStatefulSet.Spec: %v\nnewStatefulSet.Spec: %v", objName, oldStatefulSet.Spec, newStatefulSet.Spec))
+	// obj exists, 需要判断是否更新
 	if equality.Semantic.DeepEqual(oldStatefulSet.Spec, newStatefulSet.Spec) {
 		return nil
 	}
@@ -163,7 +158,7 @@ func createStatefulSetIfNotExists(ctx context.Context, r *DataServiceReconciler,
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, oldStatefulSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err = r.Patch(ctx, currentStatefulSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating statefulSet %s error", objName))
 		return err
 	}
@@ -196,7 +191,7 @@ func checkStatefulSetStatus(ctx context.Context, r *DataServiceReconciler, state
 	return nil
 }
 
-func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, newDaemonSet *appsv1.DaemonSet, dsInstance *d3osoperatorv1.DataService) error {
+func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, oldDaemonSet, newDaemonSet *appsv1.DaemonSet, dsInstance *d3osoperatorv1.DataService) error {
 	if newDaemonSet == nil {
 		return fmt.Errorf("spec DaemonSet info doesn't exist, please check crd config")
 	}
@@ -206,8 +201,8 @@ func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 	}
 	rLog := log.FromContext(ctx)
 	objName := newDaemonSet.GetName()
-	oldDaemonSet := &appsv1.DaemonSet{}
-	err := r.Get(ctx, objKey, oldDaemonSet)
+	currentDaemonSet := &appsv1.DaemonSet{}
+	err := r.Get(ctx, objKey, currentDaemonSet)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			rLog.Error(err, fmt.Sprintf("getting daemonSet %s error", objName))
@@ -226,8 +221,7 @@ func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 		}
 		return nil
 	}
-	// obj exists
-	newDaemonSet.Spec.Template.ObjectMeta = metav1.ObjectMeta{}
+	// obj exists, 需要判断是否更新
 	if equality.Semantic.DeepEqual(oldDaemonSet.Spec, newDaemonSet.Spec) {
 		return nil
 	}
@@ -237,7 +231,7 @@ func createDaemonSetIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, oldDaemonSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err = r.Patch(ctx, currentDaemonSet, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating daemonSet %s error", objName))
 		return err
 	}
@@ -270,7 +264,7 @@ func checkDaemonSetStatus(ctx context.Context, r *DataServiceReconciler, daemonS
 	return nil
 }
 
-func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, newService *corev1.Service, dsInstance *d3osoperatorv1.DataService) error {
+func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, oldService, newService *corev1.Service, dsInstance *d3osoperatorv1.DataService) error {
 	if newService == nil {
 		return fmt.Errorf("spec Service info doesn't exist, please check crd config")
 	}
@@ -280,8 +274,8 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, new
 	}
 	rLog := log.FromContext(ctx)
 	objName := newService.GetName()
-	oldService := &corev1.Service{}
-	err := r.Get(ctx, objKey, oldService)
+	currentService := &corev1.Service{}
+	err := r.Get(ctx, objKey, currentService)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			rLog.Error(err, fmt.Sprintf("getting service %s error", objName))
@@ -300,8 +294,7 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, new
 		}
 		return nil
 	}
-	// obj exists
-	rLog.V(1).Info(fmt.Sprintf("比较 service %s 的内容:\noldService.Spec: %v\nnewService.Spec: %v", objName, oldService.Spec, newService.Spec))
+	// obj exists, 需要判断是否更新
 	if equality.Semantic.DeepEqual(oldService.Spec, newService.Spec) {
 		return nil
 	}
@@ -311,14 +304,14 @@ func createServiceIfNotExists(ctx context.Context, r *DataServiceReconciler, new
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, oldService, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err = r.Patch(ctx, currentService, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating service %s error", objName))
 		return err
 	}
 	return nil
 }
 
-func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, newConfigMap *corev1.ConfigMap, dsInstance *d3osoperatorv1.DataService) error {
+func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, oldConfigMap, newConfigMap *corev1.ConfigMap, dsInstance *d3osoperatorv1.DataService) error {
 	if newConfigMap == nil {
 		return fmt.Errorf("spec ConfigMap info doesn't exist, please check crd config")
 	}
@@ -328,7 +321,7 @@ func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 	}
 	rLog := log.FromContext(ctx)
 	objName := newConfigMap.GetName()
-	oldConfigMap := &corev1.ConfigMap{}
+	currentConfigMap := &corev1.ConfigMap{}
 	err := r.Get(ctx, objKey, oldConfigMap)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -348,7 +341,7 @@ func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 		}
 		return nil
 	}
-	// obj exists
+	// obj exists, 需要判断是否更新
 	if equality.Semantic.DeepEqual(oldConfigMap.Data, newConfigMap.Data) {
 		return nil
 	}
@@ -358,7 +351,7 @@ func createConfigMapIfNotExists(ctx context.Context, r *DataServiceReconciler, n
 	if err != nil {
 		return err
 	}
-	if err = r.Patch(ctx, oldConfigMap, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+	if err = r.Patch(ctx, currentConfigMap, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
 		rLog.Error(err, fmt.Sprintf("updating configMap %s error", objName))
 		return err
 	}

@@ -432,12 +432,21 @@ web-template             1      20h
   }
   ```
 
-#### 2.后续展望
+#### 2.边界处理
 
-至此，已经初步实现使用d3os-operator自动创建dataservice服务的需求；但仍存在一些问题需要改进：
+问题A：
+用户一般都是使用cluster-admin权限来管控k8s，而ownerReferences无法对admin的行为进行管控，所以一定会存在一个“cr对象关联的deployment资源被admin直接修改”的场景，这样会导致cr资源定义的deployment内容与实际的deployment内容不一致，这样的情况如何处理？
 
-1.目前中间件服务和业务服务几乎是一同创建的，这不合理；业务容器应当确认中间件可用之后，再创建；
+方案：
+参考了业内多个operator后，确定主流方案有两种：
+1.强关联流派（如prom-operator）：
+强调CR内容与真实情况的对应关系，弱化用户自主修改的范围：
+具体的做法是，manager按周期获取deployment资源的spec内容（甚至是直接watch），并将其与当前的目标期望做对比，如果存在差异，则通过Reconcile来重写被覆盖的deployment内容，以此来修正用户手动修改导致的不一致问题。
+此方案开发起来有一定难度，因为需要将自己的结构体与get回来的结构体做比较，而k8s会添加一些默认的配置，导致此“比较函数”出现诸多边界问题，不好实现。
+此方案也有更强硬的流派，即实现准入控制器，可以直接限制admin用户对资源配置的修改；这个开发强度就更高了。
+2.弱关联流派（如kubesphere、helm）：
+弱化CR内容与真实情况的对应关系，仅在用户修改CR内容后，才主动关注CR与其关联对象的真实情况。
+此方案实现容易很多，并且也符合相关最佳实践（kubesphere、helm）。
+具体的方法是，manager维护一个受cr对象管控的deployment对象。当Reconcile执行时，不关注真实的deployment对象情况，仅对比当前目标deployment的期望与上一次deployment的目标是否一致，如不一致则get真实的deployment进行patch。
+此方案一定程度上给予用户手动更新配置的权力，容易推广到生产。
 
-2.目前没有响应dataservice cr的update方法。
-
-这些问题在未来都会解决，balabala。。。
